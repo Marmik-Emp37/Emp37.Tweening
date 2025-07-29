@@ -6,19 +6,19 @@ namespace Emp37.Tweening
 {
       using static Ease;
 
-      public class Tween<T> : IElement where T : struct
+      public class Handle<T> : IElement where T : struct
       {
-            public sealed class Blank : Tween<T>
+            public sealed class Blank : Handle<T>
             {
                   internal Blank() => Phase = Phase.None;
-                  public override Tween<T> SetEase(Type type) => this;
-                  public override Tween<T> SetEase(AnimationCurve curve) => this;
-                  public override Tween<T> SetDelay(float duration) => this;
-                  public override Tween<T> SetTimeMode(Delta value) => this;
-                  public override Tween<T> SetOnStart(Action action) => this;
-                  public override Tween<T> SetOnComplete(Action action) => this;
-                  public override Tween<T> SetOnUpdate(Action<float> action) => this;
-                  public override string ToString() => $"{nameof(Tween<T>)}<{typeof(T).Name}>.Null";
+                  public override Handle<T> SetEase(Type type) => this;
+                  public override Handle<T> SetEase(AnimationCurve curve) => this;
+                  public override Handle<T> SetDelay(float duration) => this;
+                  public override Handle<T> SetTimeMode(Delta value) => this;
+                  public override Handle<T> SetOnStart(Action action) => this;
+                  public override Handle<T> SetOnComplete(Action action) => this;
+                  public override Handle<T> SetOnUpdate(Action<float> action) => this;
+                  public override string ToString() => $"{nameof(Handle<T>)}<{typeof(T).Name}>.Null";
             }
 
             public static readonly Blank Empty = new();
@@ -45,8 +45,8 @@ namespace Emp37.Tweening
             public Phase Phase { get; private set; }
 
 
-            private protected Tween() { }
-            internal Tween(Func<T> initialize, T target, float duration, Action<T> apply, Evaluator evaluator)
+            private protected Handle() { }
+            internal Handle(Func<T> initialize, T target, float duration, Action<T> apply, Evaluator evaluator)
             {
                   Phase = Phase.Active;
 
@@ -100,7 +100,7 @@ namespace Emp37.Tweening
             }
 
             #region B U I L D E R
-            public virtual Tween<T> SetEase(Type type)
+            public virtual Handle<T> SetEase(Type type)
             {
                   easingFunction = type switch
                   {
@@ -145,28 +145,28 @@ namespace Emp37.Tweening
             /// <remarks>
             /// For predefined animation curves, see <see cref="Curves"/>.
             /// </remarks>
-            public virtual Tween<T> SetEase(AnimationCurve curve) { easingFunction = curve.Evaluate; return this; }
+            public virtual Handle<T> SetEase(AnimationCurve curve) { easingFunction = curve.Evaluate; return this; }
             /// <summary>
             /// Sets the delay before the tween starts.
             /// </summary>
             /// <param name="duration">In seconds.</param>
-            public virtual Tween<T> SetDelay(float duration) { delay = duration; return this; }
+            public virtual Handle<T> SetDelay(float duration) { delay = duration; return this; }
             /// <summary>
             /// Sets the time scale mode (scaled or unscaled) used by the tween.
             /// </summary>
-            public virtual Tween<T> SetTimeMode(Delta value) { timeMode = value; return this; }
+            public virtual Handle<T> SetTimeMode(Delta value) { timeMode = value; return this; }
             /// <summary>
             /// Sets a callback to invoke when the tween starts.
             /// </summary>
-            public virtual Tween<T> SetOnStart(Action action) { onStart = action; return this; }
+            public virtual Handle<T> SetOnStart(Action action) { onStart = action; return this; }
             /// <summary>
             /// Sets a callback to invoke during each tween update.
             /// </summary>
-            public virtual Tween<T> SetOnUpdate(Action<float> action) { onUpdate = action; return this; }
+            public virtual Handle<T> SetOnUpdate(Action<float> action) { onUpdate = action; return this; }
             /// <summary>
             /// Sets a callback to invoke when the tween completes.
             /// </summary>
-            public virtual Tween<T> SetOnComplete(Action action) { onComplete = action; return this; }
+            public virtual Handle<T> SetOnComplete(Action action) { onComplete = action; return this; }
             #endregion
       }
 }

@@ -2,8 +2,8 @@ namespace Emp37.Tweening
 {
       public interface IElement
       {
-            public bool IsEmpty { get; }
             public Phase Phase { get; }
+            public bool IsEmpty { get; }
 
             internal void Update();
             public void Pause();
