@@ -122,7 +122,7 @@ namespace Emp37.Tweening
             public static void ResumeTweens() => tweens.Iterate(item => item.Resume());
             public static void KillTweens() => tweens.Iterate(element => element.Kill());
 
-            public static Tween<T> Create<T>(Func<T> onInitialize, T target, float duration, Action<T> onValueChange, Tween<T>.Evaluator evaluate) where T : struct
+            public static Handle<T> Create<T>(Func<T> onInitialize, T target, float duration, Action<T> onValueChange, Handle<T>.Evaluator evaluate) where T : struct
             {
                   bool isValid = true;
 
@@ -130,14 +130,14 @@ namespace Emp37.Tweening
                   if (onInitialize == null) { warn($"Missing required delegate: {nameof(onInitialize)}. This delegate provides the starting value for the tween and must not be null."); isValid = false; }
                   if (onValueChange == null) { warn($"Missing required delegate: {nameof(onValueChange)}. This delegate applies the interpolated value each frame and must not be null."); isValid = false; }
 
-                  return isValid ? new Tween<T>(onInitialize, target, duration, onValueChange, evaluate) : Tween<T>.Empty;
+                  return isValid ? new Handle<T>(onInitialize, target, duration, onValueChange, evaluate) : Handle<T>.Empty;
 
-                  static void warn(string message) => Debug.LogWarning($"{nameof(Tween<T>)} creation failed: {message}");
+                  static void warn(string message) => Debug.LogWarning($"{nameof(Handle<T>)} creation failed: {message}");
             }
-            public static Tween<float> Create(Func<float> onInitialize, float target, float duration, Action<float> onValueChange) => Create(onInitialize, target, duration, onValueChange, Mathf.LerpUnclamped);
-            public static Tween<Vector2> Create(Func<Vector2> onInitialize, Vector2 target, float duration, Action<Vector2> onValueChange) => Create(onInitialize, target, duration, onValueChange, Vector2.LerpUnclamped);
-            public static Tween<Vector3> Create(Func<Vector3> onInitialize, Vector3 target, float duration, Action<Vector3> onValueChange) => Create(onInitialize, target, duration, onValueChange, Vector3.LerpUnclamped);
-            public static Tween<Quaternion> Create(Func<Quaternion> onInitialize, Quaternion target, float duration, Action<Quaternion> onValueChange) => Create(onInitialize, target, duration, onValueChange, Quaternion.LerpUnclamped);
-            public static Tween<Color> Create(Func<Color> onInitialize, Color target, float duration, Action<Color> onValueChange) => Create(onInitialize, target, duration, onValueChange, Color.LerpUnclamped);
+            public static Handle<float> Create(Func<float> onInitialize, float target, float duration, Action<float> onValueChange) => Create(onInitialize, target, duration, onValueChange, Mathf.LerpUnclamped);
+            public static Handle<Vector2> Create(Func<Vector2> onInitialize, Vector2 target, float duration, Action<Vector2> onValueChange) => Create(onInitialize, target, duration, onValueChange, Vector2.LerpUnclamped);
+            public static Handle<Vector3> Create(Func<Vector3> onInitialize, Vector3 target, float duration, Action<Vector3> onValueChange) => Create(onInitialize, target, duration, onValueChange, Vector3.LerpUnclamped);
+            public static Handle<Quaternion> Create(Func<Quaternion> onInitialize, Quaternion target, float duration, Action<Quaternion> onValueChange) => Create(onInitialize, target, duration, onValueChange, Quaternion.LerpUnclamped);
+            public static Handle<Color> Create(Func<Color> onInitialize, Color target, float duration, Action<Color> onValueChange) => Create(onInitialize, target, duration, onValueChange, Color.LerpUnclamped);
       }
 }
