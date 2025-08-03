@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 using static System.MathF;
 
 namespace Emp37.Tweening
@@ -38,6 +40,41 @@ namespace Emp37.Tweening
                   OutBounce,
                   InOutBounce,
             }
+
+            public static readonly IReadOnlyDictionary<Type, Function> TypeMap = new Dictionary<Type, Function>
+            {
+                  { Type.Linear, Linear },
+                  { Type.InSine, InSine },
+                  { Type.OutSine, OutSine },
+                  { Type.InOutSine, InOutSine },
+                  { Type.InCubic, InCubic },
+                  { Type.OutCubic, OutCubic },
+                  { Type.InOutCubic, InOutCubic },
+                  { Type.InQuint, InQuint },
+                  { Type.OutQuint, OutQuint },
+                  { Type.InOutQuint, InOutQuint },
+                  { Type.InCirc, InCirc },
+                  { Type.OutCirc, OutCirc },
+                  { Type.InOutCirc, InOutCirc },
+                  { Type.InQuad, InQuad },
+                  { Type.OutQuad, OutQuad },
+                  { Type.InOutQuad, InOutQuad },
+                  { Type.InQuart, InQuart },
+                  { Type.OutQuart, OutQuart },
+                  { Type.InOutQuart, InOutQuart },
+                  { Type.InExpo, InExpo },
+                  { Type.OutExpo, OutExpo },
+                  { Type.InOutExpo, InOutExpo },
+                  { Type.InBack, InBack },
+                  { Type.OutBack, OutBack },
+                  { Type.InOutBack, InOutBack },
+                  { Type.InElastic, InElastic },
+                  { Type.OutElastic, OutElastic },
+                  { Type.InOutElastic, InOutElastic },
+                  { Type.InBounce, InBounce },
+                  { Type.OutBounce, OutBounce },
+                  { Type.InOutBounce, InOutBounce }
+            };
 
             // U S I N G   P E N N E R ' S   E A S I N G   N O T A T I O N S
             public delegate float Function(float t);
