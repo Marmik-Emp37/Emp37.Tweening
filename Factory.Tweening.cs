@@ -70,7 +70,7 @@ namespace Emp37.Tweening
                         if (ActiveTweens == 0) return;
 
                         int count = 0;
-                        for (int i = count; i < ActiveTweens; i++)
+                        for (int i = 0; i < ActiveTweens; i++)
                         {
                               IElement element = elements[i];
                               if (element.Phase != Phase.None && i != count)
@@ -88,56 +88,38 @@ namespace Emp37.Tweening
                   public IElement this[int index] => elements[index];
             }
 
-            private static readonly Reservoir tweens = new();
-            public static int MaxTweens { get => tweens.Capacity; set => tweens.Capacity = value; }
-            public int AvailableTweens => MaxTweens - tweens.ActiveTweens;
+            private static readonly Reservoir elements = new();
+            public static int MaxTweens { get => elements.Capacity; set => elements.Capacity = value; }
+            public int AvailableTweens => MaxTweens - elements.ActiveTweens;
 
             private void LateUpdate()
             {
-                  for (int i = tweens.ActiveTweens - 1; i >= 0; i--)
+                  for (int i = elements.ActiveTweens - 1; i >= 0; i--)
                   {
-                        IElement element = tweens[i];
+                        IElement element = elements[i];
                         element.Update();
                         if (element.Phase is Phase.Complete or Phase.None)
                         {
-                              tweens.Remove(i);
+                              elements.Remove(i);
                         }
                   }
-                  if (tweens.ActiveTweens == 0)
+                  if (elements.ActiveTweens == 0)
                   {
                         enabled = false;
                   }
             }
 
-            public static void Add(IElement tween)
+            public static void Add(IElement element)
             {
-                  if (!Application.isPlaying || tween.IsEmpty) return;
+                  if (!Application.isPlaying || element.IsEmpty) return;
                   if (instance == null)
                   {
                         Initialize();
                   }
-                  if (tweens.Add(tween)) instance.enabled = true;
+                  if (elements.Add(element)) instance.enabled = true;
             }
-            public static void PauseTweens() => tweens.Iterate(item => item.Pause());
-            public static void ResumeTweens() => tweens.Iterate(item => item.Resume());
-            public static void KillTweens() => tweens.Iterate(element => element.Kill());
-
-            public static Handle<T> Create<T>(Func<T> onInitialize, T target, float duration, Action<T> onValueChange, Handle<T>.Evaluator evaluate) where T : struct
-            {
-                  bool isValid = true;
-
-                  if (duration <= 0F) { warn($"Invalid duration: {duration}. Duration must be greater than 0 seconds to perform a tween."); isValid = false; }
-                  if (onInitialize == null) { warn($"Missing required delegate: {nameof(onInitialize)}. This delegate provides the starting value for the tween and must not be null."); isValid = false; }
-                  if (onValueChange == null) { warn($"Missing required delegate: {nameof(onValueChange)}. This delegate applies the interpolated value each frame and must not be null."); isValid = false; }
-
-                  return isValid ? new Handle<T>(onInitialize, target, duration, onValueChange, evaluate) : Handle<T>.Empty;
-
-                  static void warn(string message) => Debug.LogWarning($"{nameof(Handle<T>)} creation failed: {message}");
-            }
-            public static Handle<float> Create(Func<float> onInitialize, float target, float duration, Action<float> onValueChange) => Create(onInitialize, target, duration, onValueChange, Mathf.LerpUnclamped);
-            public static Handle<Vector2> Create(Func<Vector2> onInitialize, Vector2 target, float duration, Action<Vector2> onValueChange) => Create(onInitialize, target, duration, onValueChange, Vector2.LerpUnclamped);
-            public static Handle<Vector3> Create(Func<Vector3> onInitialize, Vector3 target, float duration, Action<Vector3> onValueChange) => Create(onInitialize, target, duration, onValueChange, Vector3.LerpUnclamped);
-            public static Handle<Quaternion> Create(Func<Quaternion> onInitialize, Quaternion target, float duration, Action<Quaternion> onValueChange) => Create(onInitialize, target, duration, onValueChange, Quaternion.LerpUnclamped);
-            public static Handle<Color> Create(Func<Color> onInitialize, Color target, float duration, Action<Color> onValueChange) => Create(onInitialize, target, duration, onValueChange, Color.LerpUnclamped);
+            public static void PauseTweens() => elements.Iterate(item => item.Pause());
+            public static void ResumeTweens() => elements.Iterate(item => item.Resume());
+            public static void KillTweens() => elements.Iterate(element => element.Kill());
       }
 }
