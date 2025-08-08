@@ -9,15 +9,22 @@ namespace Emp37.Tweening
             private IElement current;
 
             public Phase Phase { get; private set; }
-            public bool IsEmpty => queue.Count == 0;
+            public bool IsEmpty => queue.Count == 0 && current == null;
 
             public static Sequence Create => new();
             public Sequence Append(IElement element)
             {
-                  if (!element.IsEmpty) queue.Enqueue(element);
+                  if (!element.IsEmpty)
+                  {
+                        queue.Enqueue(element);
+                  }
                   return this;
             }
 
+            void IElement.Init()
+            {
+                  Phase = Phase.Active;
+            }
             void IElement.Update()
             {
                   if (Phase != Phase.Active) return;
@@ -27,8 +34,10 @@ namespace Emp37.Tweening
                         if (queue.Count == 0)
                         {
                               Phase = Phase.Complete;
+                              return;
                         }
                         current = queue.Dequeue();
+                        current.Init();
                   }
                   current.Update();
                   if (current.Phase is Phase.None or Phase.Complete)
@@ -40,20 +49,18 @@ namespace Emp37.Tweening
             public void Pause()
             {
                   Phase = Phase is Phase.Active ? Phase.Paused : Phase;
+                  current?.Pause();
             }
             public void Resume()
             {
                   Phase = Phase is Phase.Paused ? Phase.Active : Phase;
+                  current?.Resume();
             }
             public void Kill()
             {
                   Phase = Phase.None;
-                  current.Kill();
-                  queue.Clear();
-            }
-            public void Reset()
-            {
-                  Phase = Phase.Active;
+                  current?.Kill();
+                  while (queue.Count > 0) queue.Dequeue().Kill();
             }
       }
 }

@@ -111,12 +111,10 @@ namespace Emp37.Tweening
 
             public static void Add(IElement element)
             {
-                  if (!Application.isPlaying || element.IsEmpty) return;
-                  if (instance == null)
+                  if (Application.isPlaying && !element.IsEmpty && elements.Add(element))
                   {
-                        Initialize();
+                        instance.enabled = true;
                   }
-                  if (elements.Add(element)) instance.enabled = true;
             }
             public static void PauseTweens() => elements.Iterate(item => item.Pause());
             public static void ResumeTweens() => elements.Iterate(item => item.Resume());

@@ -5,13 +5,18 @@ namespace Emp37.Tweening
 {
       public static class TweenExtensions
       {
+            public static void Play<T>(this T tween) where T : IElement
+            {
+                  tween.Init();
+                  Factory.Add(tween);
+            }
+
             #region U T I L I T Y
             private static Vector3 ReplaceAxis(Vector3 original, int axis, float value)
             {
                   original[axis] = value;
                   return original;
             }
-            public static void Play<T>(this T tween) where T : IElement => Factory.Add(tween);
             #endregion
 
             #region A U D I O
@@ -57,14 +62,14 @@ namespace Emp37.Tweening
             public static Tween<float> TweenMoveLocalZ(this Transform transform, float target, float duration) => Tween.Create(() => transform.localPosition.z, target, duration, value => transform.localPosition = ReplaceAxis(transform.localPosition, 2, value));
             public static Tween<Quaternion> TweenRotate(this Transform transform, Quaternion target, float duration) => Tween.Create(() => transform.rotation, target, duration, value => transform.rotation = value);
             public static Tween<Quaternion> TweenRotate(this Transform transform, Vector3 target, float duration) => Tween.Create(() => transform.rotation, Quaternion.Euler(target), duration, value => transform.rotation = value);
-            public static Tween<float> TweenRotateX(this Transform transform, float target, float duration) => Tween.Create(() => transform.eulerAngles.x, target, duration, value => transform.eulerAngles = ReplaceAxis(transform.eulerAngles, 0, value));
-            public static Tween<float> TweenRotateY(this Transform transform, float target, float duration) => Tween.Create(() => transform.eulerAngles.y, target, duration, value => transform.eulerAngles = ReplaceAxis(transform.eulerAngles, 1, value));
-            public static Tween<float> TweenRotateZ(this Transform transform, float target, float duration) => Tween.Create(() => transform.eulerAngles.z, target, duration, value => transform.eulerAngles = ReplaceAxis(transform.eulerAngles, 2, value));
+            public static Tween<float> TweenRotateX(this Transform transform, float target, float duration) => Tween.Create(() => transform.eulerAngles.x, transform.eulerAngles.x + Mathf.DeltaAngle(transform.eulerAngles.x, target), duration, value => transform.rotation = Quaternion.Euler(ReplaceAxis(transform.eulerAngles, 0, value)));
+            public static Tween<float> TweenRotateY(this Transform transform, float target, float duration) => Tween.Create(() => transform.eulerAngles.y, transform.eulerAngles.y + Mathf.DeltaAngle(transform.eulerAngles.y, target), duration, value => transform.rotation = Quaternion.Euler(ReplaceAxis(transform.eulerAngles, 1, value)));
+            public static Tween<float> TweenRotateZ(this Transform transform, float target, float duration) => Tween.Create(() => transform.eulerAngles.z, transform.eulerAngles.z + Mathf.DeltaAngle(transform.eulerAngles.z, target), duration, value => transform.rotation = Quaternion.Euler(ReplaceAxis(transform.eulerAngles, 2, value)));
             public static Tween<Quaternion> TweenRotateLocal(this Transform transform, Quaternion target, float duration) => Tween.Create(() => transform.localRotation, target, duration, value => transform.localRotation = value);
             public static Tween<Quaternion> TweenRotateLocal(this Transform transform, Vector3 target, float duration) => Tween.Create(() => transform.localRotation, Quaternion.Euler(target), duration, value => transform.localRotation = value);
-            public static Tween<float> TweenRotateLocalX(this Transform transform, float target, float duration) => Tween.Create(() => transform.localEulerAngles.x, target, duration, value => transform.localEulerAngles = ReplaceAxis(transform.localEulerAngles, 0, value));
-            public static Tween<float> TweenRotateLocalY(this Transform transform, float target, float duration) => Tween.Create(() => transform.localEulerAngles.y, target, duration, value => transform.localEulerAngles = ReplaceAxis(transform.localEulerAngles, 1, value));
-            public static Tween<float> TweenRotateLocalZ(this Transform transform, float target, float duration) => Tween.Create(() => transform.localEulerAngles.z, target, duration, value => transform.localEulerAngles = ReplaceAxis(transform.localEulerAngles, 2, value));
+            public static Tween<float> TweenRotateLocalX(this Transform transform, float target, float duration) => Tween.Create(() => transform.localEulerAngles.x, transform.localEulerAngles.x + Mathf.DeltaAngle(transform.localEulerAngles.x, target), duration, value => transform.localRotation = Quaternion.Euler(ReplaceAxis(transform.localEulerAngles, 0, value)));
+            public static Tween<float> TweenRotateLocalY(this Transform transform, float target, float duration) => Tween.Create(() => transform.localEulerAngles.y, transform.localEulerAngles.y + Mathf.DeltaAngle(transform.localEulerAngles.y, target), duration, value => transform.localRotation = Quaternion.Euler(ReplaceAxis(transform.localEulerAngles, 1, value)));
+            public static Tween<float> TweenRotateLocalZ(this Transform transform, float target, float duration) => Tween.Create(() => transform.localEulerAngles.z, transform.localEulerAngles.z + Mathf.DeltaAngle(transform.localEulerAngles.z, target), duration, value => transform.localRotation = Quaternion.Euler(ReplaceAxis(transform.localEulerAngles, 2, value)));
             public static Tween<Vector3> TweenScale(this Transform transform, Vector3 target, float duration) => Tween.Create(() => transform.localScale, target, duration, value => transform.localScale = value);
             public static Tween<float> TweenScaleX(this Transform transform, float target, float duration) => Tween.Create(() => transform.localScale.x, target, duration, value => transform.localScale = ReplaceAxis(transform.localScale, 0, value));
             public static Tween<float> TweenScaleY(this Transform transform, float target, float duration) => Tween.Create(() => transform.localScale.y, target, duration, value => transform.localScale = ReplaceAxis(transform.localScale, 1, value));

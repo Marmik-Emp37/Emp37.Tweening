@@ -2,22 +2,28 @@
 
 namespace Emp37.Tweening
 {
+      [AddComponentMenu(""), DisallowMultipleComponent]
       public sealed partial class Factory : MonoBehaviour
       {
             private static Factory instance;
 
             private Factory() { }
 
+            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+            private static void Initialize()
+            {
+                  if (instance != null)
+                  {
+                        DestroyImmediate(instance.gameObject);
+                  }
+                  instance = new GameObject(nameof(Factory)).AddComponent<Factory>();
+                  DontDestroyOnLoad(instance);
+            }
+
             private void Awake()
             {
-                  if (instance == null) instance = this;
-                  else if (instance != this)
-                  {
-                        Destroy(gameObject);
-                        return;
-                  }
-                  DontDestroyOnLoad(gameObject);
                   enabled = false;
+                  gameObject.hideFlags = HideFlags.HideAndDontSave;
             }
             private void OnDestroy()
             {
@@ -25,15 +31,6 @@ namespace Emp37.Tweening
                   {
                         KillTweens();
                         instance = null;
-                  }
-            }
-
-            private static void Initialize()
-            {
-                  instance = FindAnyObjectByType<Factory>();
-                  if (instance == null)
-                  {
-                        instance = new GameObject(nameof(Factory)).AddComponent<Factory>();
                   }
             }
       }

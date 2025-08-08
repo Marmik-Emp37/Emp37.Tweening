@@ -69,6 +69,8 @@ namespace Emp37.Tweening
             public override Tween<T> SetDelay(float _) => this;
             public override Tween<T> SetTimeMode(Delta _) => this;
             public override Tween<T> SetLoop(in Tween.LoopParams _) => this;
+            public override Tween<T> SetAutoReturn(float _ = 0) => this;
+            public override Tween<T> SetTarget(T _) => this;
             public override Tween<T> OnStart(Action _) => this;
             public override Tween<T> OnComplete(Action _) => this;
             public override Tween<T> OnUpdate(Action<float> _) => this;
@@ -99,12 +101,9 @@ namespace Emp37.Tweening
             public bool IsEmpty => ReferenceEquals(this, Empty);
             public Phase Phase { get; private set; }
 
-
             private protected Tween() { }
             internal Tween(Func<T> initialize, T target, float duration, Action<T> apply, Evaluator evaluator)
             {
-                  Phase = Phase.Active;
-
                   b = target;
                   inverseDuration = 1F / duration;
                   this.evaluator = evaluator;
@@ -116,6 +115,10 @@ namespace Emp37.Tweening
                   easingFunction = Linear;
             }
 
+            void IElement.Init()
+            {
+                  Phase = Phase.Active;
+            }
             void IElement.Update()
             {
                   if (Phase != Phase.Active) return;
@@ -133,7 +136,7 @@ namespace Emp37.Tweening
                         initTween();
                         onStart?.Invoke();
                   }
-                  progress = Mathf.Clamp01(progress + deltaTime * inverseDuration);
+                  progress = Mathf.Min(progress + deltaTime * inverseDuration, 1F);
                   float eased = easingFunction(progress);
                   T current = evaluator(a, b, eased);
                   updateTween(current);
@@ -169,55 +172,23 @@ namespace Emp37.Tweening
             {
                   if (Phase == Phase.Paused) Phase = Phase.Active;
             }
-            public void Kill() => Phase = Phase.None;
-            public void Reset()
+            public void Kill()
             {
-                  Phase = Phase.Active;
-                  progress = delay = 0F;
-                  bootstrapped = false;
+                  Phase = Phase.None;
             }
-            public void DisableLoop() => SetLoop(Tween.LoopParams.Default);
+            public void TerminateLoop() => SetLoop(Tween.LoopParams.Default);
 
             #region B U I L D E R
+            public virtual Tween<T> SetAutoReturn(float delay = 0F) => SetLoop(new(Tween.LoopParams.Type.Yoyo, 1, delay));
             /// <summary>
             /// Sets the easing function using a predefined easing type.
             /// </summary>
             public virtual Tween<T> SetEase(Type type)
             {
-                  easingFunction = type switch
+                  if (Map.TryGetValue(type, out Function function))
                   {
-                        Type.InSine => InSine,
-                        Type.OutSine => OutSine,
-                        Type.InOutSine => InOutSine,
-                        Type.InCubic => InCubic,
-                        Type.OutCubic => OutCubic,
-                        Type.InOutCubic => InOutCubic,
-                        Type.InQuint => InQuint,
-                        Type.OutQuint => OutQuint,
-                        Type.InOutQuint => InOutQuint,
-                        Type.InCirc => InCirc,
-                        Type.OutCirc => OutCirc,
-                        Type.InOutCirc => InOutCirc,
-                        Type.InQuad => InQuad,
-                        Type.OutQuad => OutQuad,
-                        Type.InOutQuad => InOutQuad,
-                        Type.InQuart => InQuart,
-                        Type.OutQuart => OutQuart,
-                        Type.InOutQuart => InOutQuart,
-                        Type.InExpo => InExpo,
-                        Type.OutExpo => OutExpo,
-                        Type.InOutExpo => InOutExpo,
-                        Type.InBack => InBack,
-                        Type.OutBack => OutBack,
-                        Type.InOutBack => InOutBack,
-                        Type.InElastic => InElastic,
-                        Type.OutElastic => OutElastic,
-                        Type.InOutElastic => InOutElastic,
-                        Type.InBounce => InBounce,
-                        Type.OutBounce => OutBounce,
-                        Type.InOutBounce => InOutBounce,
-                        _ => Linear
-                  };
+                        easingFunction = function;
+                  }
                   return this;
             }
             /// <summary>
@@ -225,23 +196,23 @@ namespace Emp37.Tweening
             /// </summary>
             /// <param name="curve">The curve used to control easing over time.</param>
             /// <remarks>
-            /// For predefined animation curves, see <see cref="Curves"/>.
+            /// For predefined animation curves, see <see cref="Profiles"/>.
             /// </remarks>
             public virtual Tween<T> SetEase(AnimationCurve curve) { easingFunction = curve.Evaluate; return this; }
             /// <summary>
             /// Sets the delay before the tween starts.
             /// </summary>
-            /// <param name="duration">In seconds.</param>
-            public virtual Tween<T> SetDelay(float duration) { delay = duration; return this; }
-            /// <summary>
-            /// Sets the time scale mode (scaled or unscaled) used by the tween.
-            /// </summary>
-            public virtual Tween<T> SetTimeMode(Delta value) { timeMode = value; return this; }
+            /// <param name="seconds">In seconds.</param>
+            public virtual Tween<T> SetDelay(float seconds) { delay = seconds; return this; }
             /// <summary>
             /// Set this tween to repeat based on a custom loop strategy.
             /// </summary>
             public virtual Tween<T> SetLoop(in Tween.LoopParams config) { loop = config; return this; }
-            public virtual Tween<T> SetAutoRewind(float delay = 0F) => SetLoop(new(Tween.LoopParams.Type.Yoyo, 1, delay));
+            public virtual Tween<T> SetTarget(T value) { b = value; return this; }
+            /// <summary>
+            /// Sets the time scale mode (scaled or unscaled) used by the tween.
+            /// </summary>
+            public virtual Tween<T> SetTimeMode(Delta value) { timeMode = value; return this; }
             /// <summary>
             /// Sets a callback to invoke when the tween starts.
             /// </summary>
