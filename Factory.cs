@@ -9,20 +9,21 @@ namespace Emp37.Tweening
 
             private Factory() { }
 
-            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-            private static void Initialize() => instance = new GameObject('~' + nameof(Factory)) { hideFlags = HideFlags.DontSave }.AddComponent<Factory>();
+            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+            private static void Initialize()
+            {
+                  if (instance != null)
+                  {
+                        DestroyImmediate(instance.gameObject);
+                        instance = null;
+                  }
+                  instance = new GameObject('~' + nameof(Factory)) { hideFlags = HideFlags.DontSave }.AddComponent<Factory>();
+            }
 
             private void Awake()
             {
-                  if (instance != null && instance != this)
-                  {
-                        DestroyImmediate(gameObject);
-                  }
-                  else
-                  {
-                        enabled = false;
-                        DontDestroyOnLoad(this);
-                  }
+                  enabled = false;
+                  DontDestroyOnLoad(this);
             }
             private void OnDestroy()
             {

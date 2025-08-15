@@ -2,7 +2,7 @@ namespace Emp37.Tweening
 {
       public enum Delta
       {
-            Scale,
+            Scaled,
             Unscaled
       }
 
