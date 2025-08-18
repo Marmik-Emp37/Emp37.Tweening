@@ -17,7 +17,7 @@ namespace Emp37.Tweening
                         DestroyImmediate(instance.gameObject);
                         instance = null;
                   }
-                  instance = new GameObject('~' + nameof(Factory)) { hideFlags = HideFlags.DontSave }.AddComponent<Factory>();
+                  instance = new GameObject("~" + nameof(Factory)) { hideFlags = HideFlags.DontSave }.AddComponent<Factory>();
             }
 
             private void Awake()
@@ -27,11 +27,11 @@ namespace Emp37.Tweening
             }
             private void OnDestroy()
             {
-                  if (instance == this)
-                  {
-                        Kill();
-                        instance = null;
-                  }
+                  if (instance != this) return;
+                  OnDestroyed();
+                  instance = null;
             }
+
+            static partial void OnDestroyed();
       }
 }

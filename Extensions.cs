@@ -3,6 +3,8 @@ using UnityEngine.UI;
 
 namespace Emp37.Tweening
 {
+      using Element;
+
       using static Tween;
 
       public static class Extensions
