@@ -13,12 +13,12 @@ namespace Emp37.Tweening
                   for (int i = tweens.Count - 1; i >= 0; i--)
                   {
                         IElement element = tweens[i];
-                        element.Update();
-                        if (element.Phase is Phase.Complete or Phase.None)
-                        {
-                              tweens.RemoveAt(i);
-                              if (tweens.Count == 0) enabled = false;
-                        }
+
+                        if (element.Phase is Phase.Active) element.Update();
+                        if (element.Phase is not (Phase.Complete or Phase.None)) continue;
+
+                        tweens.RemoveAt(i);
+                        if (tweens.Count == 0) enabled = false;
                   }
             }
 

@@ -26,7 +26,7 @@ Factory.Play(tween);
 canvasGroup.TweenFade(target: 0F, duration: 1.5F).Play();
 
 // move transform to Vector3.zero over 3s, apply InOutExpo easing, automatically return to the start value, trigger a callback when finished, then finally start the tween
-transform.TweenMove(Vector3.zero, 3F).SetEase(Ease.Type.InOutExpo).SetAutoReturn().OnComplete(() => print("Finished")).Play();
+transform.TweenMove(Vector3.zero, 3F).SetEase(Ease.Type.InOutExpo).SetReturnOnce().OnComplete(() => print("Finished")).Play();
 ```
 ### Value
 ```csharp
@@ -90,14 +90,18 @@ Tweens can repeat indefinitely or for a set number of cycles.
 ```csharp
 // endless pulsing button with yoyo loop
 playButton.TweenScale(Vector3.one * 1.1F, 0.5F)
-    .SetEase(Ease.Type.InOutSine)
+    .SetEase(Ease.Curves.Pop)
     .SetLoop(new Loop(
-        type: Loop.Type.Yoyo,    // ping-pong back and forth
-        count: -1,               // -1 = infinite
-        interval: 0.25F,         // wait 0.25s between cycles
-        isDynamic: true          // re-use original start value
-    ))
-    .Play();
+        type: Loop.Type.Yoyo,  // ping-pong back and forth
+        count: -1,             // -1 = infinite
+        interval: 0.25F        // wait 0.25s between cycles
+    )).Play();
+```
+### Invoke
+Schedule an action to run inside a tween flow.
+```csharp
+// fade out music then trigger a level load
+musicSource.TweenVolume(0F, 1.5F).Then(Tween.Invoke(() => SceneManager.LoadScene("NextLevel"))).Play();
 ```
 ### Control
 ```csharp

@@ -13,7 +13,7 @@ namespace Emp37.Tweening.Element
 
             private sealed class Blank : Value<T>
             {
-                  public override Value<T> SetAutoReturn(float _) => this;
+                  public override Value<T> SetReturnOnce(float _) => this;
                   public override Value<T> SetEase(Ease.Type _) => this;
                   public override Value<T> SetEase(AnimationCurve _) => this;
                   public override Value<T> SetDelay(float _) => this;
@@ -27,7 +27,7 @@ namespace Emp37.Tweening.Element
                   public override void Pause() { }
                   public override void Resume() { }
                   public override void Kill() { }
-                  public override void ResetLoop() { }
+                  public override void TerminateLoop() { }
 
                   public override string ToString() => $"{nameof(Value<T>)}<{typeof(T).Name}>.{nameof(Blank)}";
             }

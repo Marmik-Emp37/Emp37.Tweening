@@ -28,27 +28,23 @@ namespace Emp37.Tweening.Element
 
             void IElement.Init()
             {
-                  if (Phase != Phase.None) return;
-
                   foreach (var e in list) e.Init();
                   Phase = Phase.Active;
             }
             void IElement.Update()
             {
-                  if (Phase != Phase.Active) return;
-
-                  for (int i = list.Count - 1; i >= 0; i--)
+                  for (int id = list.Count - 1; id >= 0; id--)
                   {
-                        IElement current = list[i];
-                        current.Update();
-                        if (current.Phase is Phase.Complete or Phase.None)
-                        {
-                              int last = list.Count - 1;
-                              list[i] = list[last];
-                              list.RemoveAt(last);
+                        IElement current = list[id];
 
-                              if (list.Count == 0) Phase = Phase.Complete;
-                        }
+                        if (current.Phase is Phase.Active) current.Update();
+                        if (current.Phase is not Phase.Complete and not Phase.None) continue;
+
+                        int last = list.Count - 1;
+                        list[id] = list[last];
+                        list.RemoveAt(last);
+
+                        if (list.Count == 0) Phase = Phase.Complete;
                   }
             }
 

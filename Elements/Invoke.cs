@@ -1,6 +1,6 @@
 using System;
 
-namespace Emp37.Tweening
+namespace Emp37.Tweening.Element
 {
       public sealed class Invoke : IElement
       {
@@ -9,15 +9,12 @@ namespace Emp37.Tweening
             public Phase Phase { get; private set; }
             public bool IsEmpty => action == null;
 
-            private Invoke() { }
+            private Invoke()
+            {
+            }
             public Invoke(Action action) => this.action = action;
 
-            void IElement.Init()
-            {
-                  if (Phase != Phase.None) return;
-
-                  Phase = Phase.Active;
-            }
+            void IElement.Init() => Phase = Phase.Active;
             void IElement.Update()
             {
                   action();
@@ -32,9 +29,6 @@ namespace Emp37.Tweening
             {
                   if (Phase == Phase.Paused) Phase = Phase.Active;
             }
-            public void Kill()
-            {
-                  Phase = Phase.None;
-            }
+            public void Kill() => Phase = Phase.None;
       }
 }

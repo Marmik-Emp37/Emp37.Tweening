@@ -23,16 +23,9 @@ namespace Emp37.Tweening.Element
                   timeMode = mode;
             }
 
-            void IElement.Init()
-            {
-                  if (Phase != Phase.None) return;
-
-                  Phase = Phase.Active;
-            }
+            void IElement.Init() => Phase = Phase.Active;
             void IElement.Update()
             {
-                  if (Phase != Phase.Active) return;
-
                   if (time > 0F)
                   {
                         float delta = timeMode == Delta.Unscaled ? Time.unscaledDeltaTime : Time.deltaTime;

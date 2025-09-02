@@ -41,28 +41,22 @@ namespace Emp37.Tweening.Element
 
             void IElement.Init()
             {
-                  if (Phase != Phase.None) return;
-
-                  Phase = Phase.Active;
                   ActivateNext();
+                  Phase = Phase.Active;
             }
             void IElement.Update()
             {
-                  if (current.Phase != Phase.Active) return;
+                  if (current.Phase is Phase.Active) current.Update();
+                  if (current.Phase is not Phase.Complete and not Phase.None) return;
 
-                  current.Update();
-
-                  if (current.Phase is Phase.None or Phase.Complete)
+                  if (queue.Count == 0)
                   {
-                        if (queue.Count == 0)
-                        {
-                              current = null;
-                              Phase = Phase.Complete;
-                        }
-                        else
-                        {
-                              ActivateNext();
-                        }
+                        current = null;
+                        Phase = Phase.Complete;
+                  }
+                  else
+                  {
+                        ActivateNext();
                   }
             }
 
@@ -70,21 +64,21 @@ namespace Emp37.Tweening.Element
             {
                   if (Phase != Phase.Active) return;
 
-                  Phase = Phase.Paused;
                   current?.Pause();
+                  Phase = Phase.Paused;
             }
             public void Resume()
             {
                   if (Phase != Phase.Paused) return;
 
-                  Phase = Phase.Active;
                   current?.Resume();
+                  Phase = Phase.Active;
             }
             public void Kill()
             {
-                  Phase = Phase.None;
                   current?.Kill(); current = null;
                   queue.Clear();
+                  Phase = Phase.None;
             }
 
             private void ActivateNext()

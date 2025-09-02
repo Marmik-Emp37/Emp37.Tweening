@@ -53,13 +53,10 @@ namespace Emp37.Tweening.Element
 
             void IElement.Init()
             {
-                  if (Phase != Phase.None || IsDestroyed) return;
-
-                  Phase = Phase.Active;
+                  if (!IsDestroyed) Phase = Phase.Active;
             }
             void IElement.Update()
             {
-                  if (Phase != Phase.Active) return;
                   if (IsDestroyed)
                   {
                         Kill();
@@ -72,8 +69,6 @@ namespace Emp37.Tweening.Element
                   {
                         delay = Mathf.Max(delay - deltaTime, 0F);
                         if (delay != 0F) return;
-
-                        if (loop.IsDynamic && bootstrapped) initTween();
                   }
 
                   if (!bootstrapped)
@@ -98,12 +93,12 @@ namespace Emp37.Tweening.Element
                         Utils.SafeInvoke(onComplete);
                         return;
                   }
+
+                  // decrement if finite
                   if (loop.Count > 0) loop.Count--;
-                  switch (loop.Mode)
-                  {
-                        case Loop.Type.Repeat: break;
-                        case Loop.Type.Yoyo: (a, b) = (b, a); break;
-                  }
+
+                  if (loop.Mode == Loop.Type.Yoyo) (a, b) = (b, a);
+
                   progress = 0F;
                   delay = loop.Delay;
             }
@@ -117,7 +112,7 @@ namespace Emp37.Tweening.Element
                   if (Phase == Phase.Paused) Phase = Phase.Active;
             }
             public virtual void Kill() => Phase = Phase.None;
-            public virtual void ResetLoop() => SetLoop(Loop.Default);
+            public virtual void TerminateLoop() => SetLoop(Loop.Default);
 
             public override string ToString() => $"{nameof(Value<T>)}<{typeof(T).Name}> (Phase: {Phase}, Progress: {progress:P0})";
 
@@ -127,7 +122,7 @@ namespace Emp37.Tweening.Element
             /// Configures this tween to automatically play forward, then reverse once (Yoyo loop).
             /// </summary>
             /// <param name="delay">In seconds.</param>
-            public virtual Value<T> SetAutoReturn(float delay = 0F) => SetLoop(new(Loop.Type.Yoyo, 1, delay));
+            public virtual Value<T> SetReturnOnce(float delay = 0F) => SetLoop(new(Loop.Type.Yoyo, 1, delay));
             /// <summary>
             /// Sets the easing function using a predefined easing type.
             /// </summary>
