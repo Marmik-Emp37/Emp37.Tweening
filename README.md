@@ -106,9 +106,9 @@ musicSource.TweenVolume(0F, 1.5F).Then(Tween.Invoke(() => SceneManager.LoadScene
 ### Control
 ```csharp
 IElement tween = rectTransform.TweenSize(Vector2.one * 5F, 2F).Play();
-tween.Pause();   // stop temporarily
-tween.Resume();  // continue
-tween.Kill();    // stop and dispose
+tween.Pause();  // stop temporarily
+tween.Resume(); // continue
+tween.Kill();   // stop and dispose
 ```
 ## Lifecycle
 - Tweens update during Unity's `Update` loop by default.

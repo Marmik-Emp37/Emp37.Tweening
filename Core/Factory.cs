@@ -2,6 +2,13 @@
 
 namespace Emp37.Tweening
 {
+      /// <summary>
+      /// Singleton factory that manages the lifecycle of all active tweens. Automatically created at runtime and persists across scene loads.
+      /// </summary>
+      /// <remarks>
+      /// Uses Unity's LateUpdate to tick all active tweens, ensuring animations run after all other game logic has been processed each frame.
+      /// <br>It aslo automatically enables/disables itself based on active tween count to minimize performance overhead when no tweens are running.</br>
+      /// </remarks>
       [AddComponentMenu(""), DisallowMultipleComponent]
       public sealed partial class Factory : MonoBehaviour
       {
@@ -22,7 +29,7 @@ namespace Emp37.Tweening
 
             private void Awake()
             {
-                  enabled = false;
+                  enabled = false; // only enable when tweens are active
                   DontDestroyOnLoad(this);
             }
             private void OnDestroy()

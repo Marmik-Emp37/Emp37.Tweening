@@ -1,4 +1,7 @@
 using System;
+using System.Text.RegularExpressions;
+
+using UnityEditor.Experimental.GraphView;
 
 using UnityEngine;
 
@@ -7,9 +10,17 @@ using UObject = UnityEngine.Object;
 namespace Emp37.Tweening.Element
 {
       using static Ease;
+      using static PlasticGui.WorkspaceWindow.CodeReview.ReviewChanges.Summary.CommentSummaryData;
 
+      /// <summary>
+      /// A tween element that interpolates between two values of type T over a specified duration. Supports easing, looping, delays and lifecycle callbacks.
+      /// </summary>
+      /// <typeparam name="T">The value type being interpolated (must be a struct)</typeparam>
       public partial class Value<T> : IElement where T : struct
       {
+            /// <summary>
+            /// Function that returns the interpolated value between start and target.
+            /// </summary>
             public delegate T Evaluator(T a, T b, float ratio);
 
             private T a, b;
@@ -24,7 +35,7 @@ namespace Emp37.Tweening.Element
             private Function easingFunction;
             private readonly Action<T> updateTween;
             private readonly bool isLinked;
-            private readonly UObject linkedTarget;
+            private readonly UObject linkedTarget; // auto-kill tween if this object is destroyed
 
             private Action onStart;
             private Action<float> onUpdate;
@@ -39,6 +50,7 @@ namespace Emp37.Tweening.Element
                   inverseDuration = 1F / duration;
                   this.evaluator = evaluator;
 
+                  // capture initial value at the moment the tween begins
                   initTween = () => a = init();
                   updateTween = update;
 
@@ -112,14 +124,17 @@ namespace Emp37.Tweening.Element
                   if (Phase == Phase.Paused) Phase = Phase.Active;
             }
             public virtual void Kill() => Phase = Phase.None;
+            /// <summary>
+            /// Stops looping and allows the current cycle to complete naturally.
+            /// </summary>
             public virtual void TerminateLoop() => SetLoop(Loop.Default);
 
             public override string ToString() => $"{nameof(Value<T>)}<{typeof(T).Name}> (Phase: {Phase}, Progress: {progress:P0})";
 
 
-            #region C O N F I G U R A T I O N
+            #region F L U E N T
             /// <summary>
-            /// Configures this tween to automatically play forward, then reverse once (Yoyo loop).
+            /// Configures this tween to automatically play forward, then reverse once using Yoyo loop.
             /// </summary>
             /// <param name="delay">In seconds.</param>
             public virtual Value<T> SetReturnOnce(float delay = 0F) => SetLoop(new(Loop.Type.Yoyo, 1, delay));

@@ -6,40 +6,45 @@ namespace Emp37.Tweening
 {
       internal sealed class ElementArray
       {
-            private int _capacity;
             private IElement[] elements;
 
             public int Count { get; private set; }
             public int Capacity
             {
-                  get => _capacity;
+                  get => elements.Length;
                   set
                   {
                         int limit = Mathf.Max(value, Count);
-                        if (limit == _capacity) return;
-                        if (limit < Count) Debug.LogWarning($"Requested capacity {value} is below the active tween count ({limit}). Using {limit} to prevent data loss.");
+                        if (elements.Length == limit) return;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                        if (limit < Count)
+                        {
+                              Debug.LogWarning($"Requested capacity {value} is below active count ({Count}). Using {limit}.");
+                        }
+#endif
                         Array.Resize(ref elements, limit);
-                        _capacity = limit;
                   }
             }
 
-            public ElementArray(int capacity) => elements = new IElement[_capacity = Mathf.Max(1, capacity)];
+            public ElementArray(int capacity) => elements = new IElement[Mathf.Max(1, capacity)];
 
             public bool Add(IElement item)
             {
-                  bool value = Count < Capacity;
-                  if (value) elements[Count++] = item;
-                  return value;
+                  if (Count == Capacity) return false;
+                  elements[Count++] = item;
+                  return true;
             }
             public void RemoveAt(int index)
             {
                   if (!InRange(index)) return;
-                  elements[index] = elements[--Count];
-                  elements[Count] = null;
+
+                  int last = --Count;
+                  elements[index] = elements[last];
+                  elements[last] = null; // drop reference for GC
             }
             public void Clear()
             {
-                  Array.Clear(elements, 0, Count);
+                  Array.Clear(elements, 0, Count); // bulk-null active range
                   Count = 0;
             }
             public void ForEach(Action<IElement> action)
