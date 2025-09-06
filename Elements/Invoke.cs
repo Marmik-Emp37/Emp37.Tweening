@@ -17,7 +17,7 @@ namespace Emp37.Tweening.Element
             void IElement.Init() => Phase = Phase.Active;
             void IElement.Update()
             {
-                  action();
+                  Utils.SafeInvoke(action);
                   Phase = Phase.Complete;
             }
 

@@ -16,7 +16,6 @@ namespace Emp37.Tweening.Element
                   public override Value<T> SetReturnOnce(float _) => this;
                   public override Value<T> SetEase(Ease.Type _) => this;
                   public override Value<T> SetEase(AnimationCurve _) => this;
-                  public override Value<T> SetDelay(float _) => this;
                   public override Value<T> SetLoop(in Loop _) => this;
                   public override Value<T> SetTarget(T _) => this;
                   public override Value<T> SetTimeMode(Delta _) => this;

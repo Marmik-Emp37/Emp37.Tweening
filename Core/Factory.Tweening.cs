@@ -14,7 +14,7 @@ namespace Emp37.Tweening
             public int AvailableTweens => MaxTweens - tweens.Count;
 
             private void LateUpdate()
-            {                 
+            {
                   for (int i = tweens.Count - 1; i >= 0; i--) // iterate backwards so RemoveAt (swap-remove) doesn't skip elements
                   {
                         IElement element = tweens[i];

@@ -1,7 +1,4 @@
 using System;
-using System.Text.RegularExpressions;
-
-using UnityEditor.Experimental.GraphView;
 
 using UnityEngine;
 
@@ -10,7 +7,6 @@ using UObject = UnityEngine.Object;
 namespace Emp37.Tweening.Element
 {
       using static Ease;
-      using static PlasticGui.WorkspaceWindow.CodeReview.ReviewChanges.Summary.CommentSummaryData;
 
       /// <summary>
       /// A tween element that interpolates between two values of type T over a specified duration. Supports easing, looping, delays and lifecycle callbacks.
@@ -25,15 +21,17 @@ namespace Emp37.Tweening.Element
 
             private T a, b;
             private Delta timeMode;
-            private bool bootstrapped;
-            private Loop loop;
-
-            private float delay, progress;
+            private float progress;
             private readonly float inverseDuration;
+
+            private Loop loop;
+            private float delay;
+
             private readonly Action initTween;
             private readonly Evaluator evaluator;
             private Function easingFunction;
             private readonly Action<T> updateTween;
+
             private readonly bool isLinked;
             private readonly UObject linkedTarget; // auto-kill tween if this object is destroyed
 
@@ -65,7 +63,11 @@ namespace Emp37.Tweening.Element
 
             void IElement.Init()
             {
-                  if (!IsDestroyed) Phase = Phase.Active;
+                  if (IsDestroyed) return;
+
+                  initTween();
+                  Utils.SafeInvoke(onStart);
+                  Phase = Phase.Active;
             }
             void IElement.Update()
             {
@@ -80,15 +82,7 @@ namespace Emp37.Tweening.Element
                   if (delay > 0F)
                   {
                         delay = Mathf.Max(delay - deltaTime, 0F);
-                        if (delay != 0F) return;
-                  }
-
-                  if (!bootstrapped)
-                  {
-                        bootstrapped = true;
-
-                        initTween();
-                        Utils.SafeInvoke(onStart);
+                        return;
                   }
 
                   progress = Mathf.Min(progress + deltaTime * inverseDuration, 1F);
@@ -105,14 +99,15 @@ namespace Emp37.Tweening.Element
                         Utils.SafeInvoke(onComplete);
                         return;
                   }
+                  else
+                  {
+                        if (loop.Count > 0) loop.Count--; // decrement if finite
 
-                  // decrement if finite
-                  if (loop.Count > 0) loop.Count--;
+                        if (loop.Mode == Loop.Type.Yoyo) (a, b) = (b, a);
 
-                  if (loop.Mode == Loop.Type.Yoyo) (a, b) = (b, a);
-
-                  progress = 0F;
-                  delay = loop.Delay;
+                        progress = 0F;
+                        delay = loop.Delay;
+                  }
             }
 
             public virtual void Pause()
@@ -147,11 +142,6 @@ namespace Emp37.Tweening.Element
             /// </summary>
             /// <param name="curve">The curve that maps normalized progress (0–1) to interpolation output. Values may extend outside the [0,1] range depending on the curve.</param>
             public virtual Value<T> SetEase(AnimationCurve curve) { easingFunction = curve.Evaluate; return this; }
-            /// <summary>
-            /// Sets a delay before the tween begins playing.
-            /// </summary>
-            /// <param name="value">In seconds.</param>
-            public virtual Value<T> SetDelay(float value) { delay = value; return this; }
             /// <summary>
             /// Configures this tween to repeat according to a specified loop strategy.
             /// </summary>

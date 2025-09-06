@@ -14,7 +14,7 @@ namespace Emp37.Tweening
 
             public readonly Type Mode;
             public int Count;
-            public float Delay;
+            public readonly float Delay;
 
             public static readonly Loop Default = new(Type.None, 0);
 
