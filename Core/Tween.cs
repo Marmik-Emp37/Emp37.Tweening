@@ -46,15 +46,35 @@ namespace Emp37.Tweening
 
                   static void warn(string message) => Debug.LogWarning($"{nameof(Element.Value<T>)} creation failed: {message}");
             }
-            /// <summary>Creates a value tween using <see cref="Mathf.LerpUnclamped(float, float, float)"/>.</summary>
+
+            /// <summary>
+            /// Creates a value tween using <see cref="Mathf.LerpUnclamped(float, float, float)"/>.
+            /// </summary>
             public static Value<float> Value(Func<float> init, float target, float duration, Action<float> update, UObject link = null) => Value(init, target, duration, update, Mathf.LerpUnclamped, link);
-            /// <summary>Creates a value tween using <see cref="Vector2.LerpUnclamped(Vector2, Vector2, float)"/>.</summary>
+
+            /// <summary>
+            /// Creates a value tween using <see cref="Vector2.LerpUnclamped(Vector2, Vector2, float)"/>.
+            /// </summary>
             public static Value<Vector2> Value(Func<Vector2> init, Vector2 target, float duration, Action<Vector2> update, UObject link = null) => Value(init, target, duration, update, Vector2.LerpUnclamped, link);
-            /// <summary>Creates a value tween using <see cref="Vector3.LerpUnclamped(Vector3, Vector3, float)"/>.</summary>
+
+            /// <summary>
+            /// Creates a value tween using <see cref="Vector3.LerpUnclamped(Vector3, Vector3, float)"/>.
+            /// </summary>
             public static Value<Vector3> Value(Func<Vector3> init, Vector3 target, float duration, Action<Vector3> update, UObject link = null) => Value(init, target, duration, update, Vector3.LerpUnclamped, link);
-            /// <summary>Creates a value tween using <see cref="Quaternion.LerpUnclamped(Quaternion, Quaternion, float)"/>.</summary>
+
+            /// <summary>
+            /// Creates a value tween using <see cref="Vector4.LerpUnclamped(Vector4, Vector4, float)"/>.
+            /// </summary>
+            public static Value<Vector4> Value(Func<Vector4> init, Vector4 target, float duration, Action<Vector4> update, UObject link = null) => Value(init, target, duration, update, Vector4.LerpUnclamped, link);
+
+            /// <summary>
+            /// Creates a value tween using <see cref="Quaternion.LerpUnclamped(Quaternion, Quaternion, float)"/>.
+            /// </summary>
             public static Value<Quaternion> Value(Func<Quaternion> init, Quaternion target, float duration, Action<Quaternion> update, UObject link = null) => Value(init, target, duration, update, Quaternion.LerpUnclamped, link);
-            /// <summary>Creates a value tween using <see cref="Color.LerpUnclamped(Color, Color, float)"/>.</summary>
+
+            /// <summary>
+            /// Creates a value tween using <see cref="Color.LerpUnclamped(Color, Color, float)"/>.
+            /// </summary>
             public static Value<Color> Value(Func<Color> init, Color target, float duration, Action<Color> update, UObject link = null) => Value(init, target, duration, update, Color.LerpUnclamped, link);
 
             public static Parallel Parallel(params IElement[] elements) => new(elements);

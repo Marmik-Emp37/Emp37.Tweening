@@ -2,6 +2,7 @@
 A high-performance, composable tweening API for Unity that emphasizes clean architecture and developer experience.
 
 ## Features
+- Works with domain and scene reloading both turned off.
 - Minimal per-frame overhead with optimized update loops.
 - Generic Value<T> system supports any struct type.
 - Built-in support for Unity primitives (Vector3, Color, Quaternion, etc.).
@@ -23,7 +24,7 @@ IElement tween = rectTransform.TweenMoveY(200F, 1F);
 Factory.Play(tween);
 ```
 > [!Note]
-> Everything in this API is an `IElement`- a composable unity that can be played, paused or killed.
+> Everything that tweens in this API is an `IElement` that can be played, paused or killed.
 ### Extensions
 ```csharp
 // fade a UI element
@@ -94,7 +95,7 @@ musicSource.TweenVolume(0F, 1.5F).Then(Tween.Invoke(() => SceneManager.LoadScene
 tween.SetLoop(new Loop(type: Loop.Type.Yoyo, count: -1, interval: 0.5F));
 
 // repeat 3 times
-tween.SetLoop(new Loop(Loop.Type.Repeat, count: 3));
+tween.SetLoop(new Loop(Loop.Type.Repeat, 3));
 
 // one-shot return to start (common for UI effects)
 tween.SetReturnOnce();
@@ -105,8 +106,8 @@ var tween = transform.TweenMove(target, 2f).OnStart(() => Debug.Log("Moving!")).
 
 tween.Pause();
 tween.Resume();
-tween.Kill();           // immediate stop
-tween.TerminateLoop();  // stop looping, finish current cycle
+tween.Kill();          // immediate stop
+tween.TerminateLoop(); // stop looping, finish current cycle
 ```
 ### Memory Management & Linking
 ```csharp
@@ -114,13 +115,8 @@ tween.TerminateLoop();  // stop looping, finish current cycle
 var tween = Tween.Value(() => enemy.health, target: 0F, duration: 1F, update: v => enemy.health = v, link: enemy.gameObject);
 
 // Capacity management
-Factory.MaxTweens = 256;  // increase pool size if needed
+Factory.MaxTweens = 256; // increase pool size if needed
 ```
-## Performance Characteristics
-- **Memory**: Zero allocations during playback (after initial setup).
-- **CPU**: ~0.02ms for 100 active tweens on mid-range mobile hardware.
-- **Capacity**: Default pool supports 64 concurrent tweens, easily configurable.
-- **Startup**: <1ms initialization cost via RuntimeInitializeOnLoadMethod.
 ## API Design Philosophy
 - **Lazy Execution**: Tweens are configured but don't consume resources until `.Play()` is called.
 - **Composition**: Complex animations are built by combining simple elements rather than creating monolithic tween classes.
@@ -128,4 +124,4 @@ Factory.MaxTweens = 256;  // increase pool size if needed
 - **Fluency**: Method chaining enables expressive, readable animation code.
 
 ## License
-MIT License - see [LICENSE](LICENSE) for details.
+[MIT License](LICENSE)
