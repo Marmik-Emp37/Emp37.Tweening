@@ -7,6 +7,7 @@ namespace Emp37.Tweening.Element
             private readonly Queue<IElement> queue;
             private IElement current;
 
+            public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => current == null && queue.Count == 0;
 

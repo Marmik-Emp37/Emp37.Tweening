@@ -6,13 +6,16 @@ namespace Emp37.Tweening.Element
 {
       public partial class Value<T> where T : struct
       {
-            private Value() { }
+            private Value()
+            {
+            }
 
             public static readonly Value<T> Empty = new Blank() { Phase = Phase.None };
             public bool IsEmpty => ReferenceEquals(this, Empty);
 
             private sealed class Blank : Value<T>
             {
+                  public override Value<T> SetTag(string _) => this;
                   public override Value<T> SetReturnOnce(float _) => this;
                   public override Value<T> SetEase(Ease.Type _) => this;
                   public override Value<T> SetEase(AnimationCurve _) => this;

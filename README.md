@@ -117,7 +117,7 @@ var tween = Tween.Value(() => enemy.health, target: 0F, duration: 1F, update: v 
 // Capacity management
 Factory.MaxTweens = 256; // increase pool size if needed
 ```
-## API Design Philosophy
+## Design Philosophy
 - **Lazy Execution**: Tweens are configured but don't consume resources until `.Play()` is called.
 - **Composition**: Complex animations are built by combining simple elements rather than creating monolithic tween classes.
 - **Fail-Safe**: Invalid parameters return empty tweens rather than throwing exceptions, preventing runtime crashes.

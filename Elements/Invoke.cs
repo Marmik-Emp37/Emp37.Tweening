@@ -6,6 +6,7 @@ namespace Emp37.Tweening.Element
       {
             private readonly Action action;
 
+            public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => action == null;
 

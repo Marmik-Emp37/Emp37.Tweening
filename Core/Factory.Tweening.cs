@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+
+using UnityEngine;
 
 namespace Emp37.Tweening
 {
@@ -42,9 +44,57 @@ namespace Emp37.Tweening
                   element.Init();
                   instance.enabled = true;
             }
-            public static void Pause() => tweens.ForEach(e => e.Pause());
-            public static void Resume() => tweens.ForEach(e => e.Resume());
-            public static void Kill() => tweens.ForEach(e => e.Kill());
+            public static void Pause(string tag = null)
+            {
+                  if (string.IsNullOrEmpty(tag))
+                  {
+                        tweens.ForEach(e => e.Pause());
+                  }
+                  else
+                  {
+                        tweens.ForEach(e =>
+                        {
+                              if (e.Tag != null && e.Tag.Equals(tag, StringComparison.Ordinal))
+                              {
+                                    e.Pause();
+                              }
+                        });
+                  }
+            }
+            public static void Resume(string tag = null)
+            {
+                  if (string.IsNullOrEmpty(tag))
+                  {
+                        tweens.ForEach(e => e.Resume());
+                  }
+                  else
+                  {
+                        tweens.ForEach(e =>
+                        {
+                              if (e.Tag != null && e.Tag.Equals(tag, StringComparison.Ordinal))
+                              {
+                                    e.Resume();
+                              }
+                        });
+                  }
+            }
+            public static void Kill(string tag = null)
+            {
+                  if (string.IsNullOrEmpty(tag))
+                  {
+                        tweens.ForEach(e => e.Kill());
+                  }
+                  else
+                  {
+                        tweens.ForEach(e =>
+                        {
+                              if (e.Tag != null && e.Tag.Equals(tag, StringComparison.Ordinal))
+                              {
+                                    e.Kill();
+                              }
+                        });
+                  }
+            }
 
             static partial void OnFactoryDestroy() => tweens.Clear();
       }

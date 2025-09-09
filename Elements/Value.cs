@@ -28,7 +28,7 @@ namespace Emp37.Tweening.Element
             private float delay;
 
             private readonly Action initTween;
-            private readonly Evaluator evaluator;
+            private readonly Evaluator evaluate;
             private Function easingFunction;
             private readonly Action<T> updateTween;
 
@@ -39,18 +39,17 @@ namespace Emp37.Tweening.Element
             private Action<float> onUpdate;
             private Action onComplete;
 
+            public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsDestroyed => isLinked && linkedTarget == null;
 
-            internal Value(Func<T> init, T target, float duration, Action<T> update, Evaluator evaluator, UObject link = null)
-            {
-                  b = target;
-                  inverseDuration = 1F / duration;
-                  this.evaluator = evaluator;
 
-                  // capture initial value at the moment the tween begins
-                  initTween = () => a = init();
+            private Value(float duration, Action<T> update, Evaluator evaluator, UObject link)
+            {
+                  inverseDuration = 1F / duration;
+
                   updateTween = update;
+                  evaluate = evaluator;
 
                   if (link != null)
                   {
@@ -59,6 +58,19 @@ namespace Emp37.Tweening.Element
                   }
 
                   easingFunction = Linear;
+            }
+            internal Value(Func<T> init, T target, float duration, Action<T> update, Evaluator evaluator, UObject link = null) : this(duration, update, evaluator, link)
+            {
+                  b = target;
+                  initTween = () => a = init();
+            }
+            internal Value(Func<T> init, Func<T> dynamicTarget, float duration, Action<T> update, Evaluator evaluator, UObject link = null) : this(duration, update, evaluator, link)
+            {
+                  initTween = () =>
+                  {
+                        a = init();
+                        b = dynamicTarget();
+                  };
             }
 
             void IElement.Init()
@@ -82,12 +94,12 @@ namespace Emp37.Tweening.Element
                   if (delay > 0F)
                   {
                         delay = Mathf.Max(delay - deltaTime, 0F);
-                        return;
+                        if (delay != 0F) return;
                   }
 
                   progress = Mathf.Min(progress + deltaTime * inverseDuration, 1F);
                   float eased = easingFunction(progress);
-                  T value = evaluator(a, b, eased);
+                  T value = evaluate(a, b, eased);
                   updateTween(value);
                   Utils.SafeInvoke(onUpdate, eased);
 
@@ -99,15 +111,11 @@ namespace Emp37.Tweening.Element
                         Utils.SafeInvoke(onComplete);
                         return;
                   }
-                  else
-                  {
-                        if (loop.Count > 0) loop.Count--; // decrement if finite
+                  if (loop.Count > 0) loop.Count--; // decrement if finite
+                  if (loop.Mode == Loop.Type.Yoyo) (a, b) = (b, a);
 
-                        if (loop.Mode == Loop.Type.Yoyo) (a, b) = (b, a);
-
-                        progress = 0F;
-                        delay = loop.Delay;
-                  }
+                  progress = 0F;
+                  delay = loop.Delay;
             }
 
             public virtual void Pause()
@@ -128,6 +136,7 @@ namespace Emp37.Tweening.Element
 
 
             #region F L U E N T
+            public virtual Value<T> SetTag(string tag) { Tag = tag; return this; }
             /// <summary>
             /// Configures this tween to automatically play forward, then reverse once using Yoyo loop.
             /// </summary>
