@@ -44,57 +44,27 @@ namespace Emp37.Tweening
                   element.Init();
                   instance.enabled = true;
             }
-            public static void Pause(string tag = null)
+
+            private static void ProcessTweens(string tag, Action<IElement> action)
             {
                   if (string.IsNullOrEmpty(tag))
                   {
-                        tweens.ForEach(e => e.Pause());
+                        tweens.ForEach(action);
                   }
                   else
                   {
-                        tweens.ForEach(e =>
+                        tweens.ForEach(element =>
                         {
-                              if (e.Tag != null && e.Tag.Equals(tag, StringComparison.Ordinal))
+                              if (!string.IsNullOrEmpty(element.Tag) && string.Equals(element.Tag, tag, StringComparison.Ordinal))
                               {
-                                    e.Pause();
+                                    action(element);
                               }
                         });
                   }
             }
-            public static void Resume(string tag = null)
-            {
-                  if (string.IsNullOrEmpty(tag))
-                  {
-                        tweens.ForEach(e => e.Resume());
-                  }
-                  else
-                  {
-                        tweens.ForEach(e =>
-                        {
-                              if (e.Tag != null && e.Tag.Equals(tag, StringComparison.Ordinal))
-                              {
-                                    e.Resume();
-                              }
-                        });
-                  }
-            }
-            public static void Kill(string tag = null)
-            {
-                  if (string.IsNullOrEmpty(tag))
-                  {
-                        tweens.ForEach(e => e.Kill());
-                  }
-                  else
-                  {
-                        tweens.ForEach(e =>
-                        {
-                              if (e.Tag != null && e.Tag.Equals(tag, StringComparison.Ordinal))
-                              {
-                                    e.Kill();
-                              }
-                        });
-                  }
-            }
+            public static void Pause(string tag = null) => ProcessTweens(tag, element => element.Pause());
+            public static void Resume(string tag = null) => ProcessTweens(tag, element => element.Resume());
+            public static void Kill(string tag = null) => ProcessTweens(tag, element => element.Kill());
 
             static partial void OnFactoryDestroy() => tweens.Clear();
       }

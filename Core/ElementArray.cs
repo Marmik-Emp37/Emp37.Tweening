@@ -14,10 +14,11 @@ namespace Emp37.Tweening
                   get => elements.Length;
                   set
                   {
+                        if (value == elements.Length) return;
+
                         int limit = Mathf.Max(value, Count);
-                        if (elements.Length == limit) return;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                        if (limit < Count)
+                        if (limit != value)
                         {
                               Debug.LogWarning($"Requested capacity {value} is below active count ({Count}). Using {limit}.");
                         }

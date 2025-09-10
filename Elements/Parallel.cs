@@ -15,34 +15,34 @@ namespace Emp37.Tweening.Element
             {
                   for (int i = 0; i < elements.Length; i++)
                   {
-                        var e = elements[i];
-                        if (!e.IsEmpty) list.Add(e);
+                        var element = elements[i];
+                        if (!element.IsEmpty) list.Add(element);
                   }
             }
             internal Parallel(IEnumerable<IElement> elements) : this()
             {
-                  foreach (var e in elements)
+                  foreach (var element in elements)
                   {
-                        if (!e.IsEmpty) list.Add(e);
+                        if (!element.IsEmpty) list.Add(element);
                   }
             }
 
             void IElement.Init()
             {
-                  foreach (var e in list) e.Init();
+                  foreach (var element in list) element.Init();
                   Phase = Phase.Active;
             }
             void IElement.Update()
             {
-                  for (int id = list.Count - 1; id >= 0; id--)
+                  for (int i = list.Count - 1; i >= 0; i--)
                   {
-                        IElement current = list[id];
+                        IElement element = list[i];
 
-                        if (current.Phase is Phase.Active) current.Update();
-                        if (current.Phase is not Phase.Complete and not Phase.None) continue;
+                        if (element.Phase is Phase.Active) element.Update();
+                        if (element.Phase is not Phase.Complete and not Phase.None) continue;
 
                         int last = list.Count - 1;
-                        list[id] = list[last];
+                        list[i] = list[last];
                         list.RemoveAt(last);
 
                         if (list.Count == 0) Phase = Phase.Complete;
@@ -53,19 +53,19 @@ namespace Emp37.Tweening.Element
             {
                   if (Phase != Phase.Active) return;
 
-                  foreach (var e in list) e.Pause();
+                  foreach (var element in list) element.Pause();
                   Phase = Phase.Paused;
             }
             public void Resume()
             {
                   if (Phase != Phase.Paused) return;
 
-                  foreach (var e in list) e.Resume();
+                  foreach (var element in list) element.Resume();
                   Phase = Phase.Active;
             }
             public void Kill()
             {
-                  foreach (var e in list) e.Kill();
+                  foreach (var element in list) element.Kill();
                   list.Clear();
                   Phase = Phase.None;
             }

@@ -12,8 +12,7 @@ namespace Emp37.Tweening.Element
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
-            public bool IsEmpty => time <= 0F && predicate == null;
-
+            public bool IsEmpty => time < 0F && predicate == null;
 
             private Delay()
             {

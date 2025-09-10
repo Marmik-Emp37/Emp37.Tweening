@@ -81,34 +81,13 @@ namespace Emp37.Tweening
             #region P E N N E R ' S   E A S I N G   N O T A T I O N S
             public delegate float Function(float t);
 
-            /// <summary>
-            /// Default overshoot amount for Back easing.
-            /// </summary>
-            public const float S = 1.70158F;
-            /// <summary>
-            /// Adjusted overshoot for smoother InOutBack transition.
-            /// </summary>
-            public const float C2 = S * 1.525F;
-            /// <summary>
-            /// Amplified overshoot used in InBack and OutBack formulas.
-            /// </summary>
-            public const float C3 = S + 1F;
-            /// <summary>
-            /// Angular frequency for InElastic and OutElastic easing functions (controls number of oscillations).
-            /// </summary>
-            public const float C4 = 2F * PI / 3F;
-            /// <summary>
-            /// Angular frequency for InOutElastic easing (higher value creates faster oscillation).
-            /// </summary>
-            public const float C5 = 2F * PI / 4.5F;
-            /// <summary>
-            /// Bounce scaling factor (controls bounce height and shape).
-            /// </summary>
-            public const float N1 = 7.5625F;
-            /// <summary>
-            /// Bounce phase division (segments the bounce into time intervals for OutBounce).
-            /// </summary>
-            public const float D1 = 2.75F;
+            public const float S = 1.70158F; // default overshoot for Back easing
+            public const float C2 = S * 1.525F; // adjusted overshoot for smoother InOutBack transition
+            public const float C3 = S + 1F; // amplified overshoot used in InBack and OutBack
+            public const float C4 = 2F * PI / 3F; // angular frequency for InElastic and OutElastic (controls number of oscillations)
+            public const float C5 = 2F * PI / 4.5F; // angular frequency for InOutElastic (higher value creates faster oscillation)
+            public const float N1 = 7.5625F; // bounce scaling factor (controls bounce height and shape)
+            public const float D1 = 2.75F; // bounce phase division (segments the bounce into time intervals for OutBounce).
             #endregion
 
             public static float Linear(float t) => t;

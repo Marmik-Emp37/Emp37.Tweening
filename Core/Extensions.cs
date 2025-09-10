@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+using TMPro;
+
 namespace Emp37.Tweening
 {
       using Element;
@@ -137,7 +139,7 @@ namespace Emp37.Tweening
             }
 
 
-            // UI
+            // U I
             public static Value<Vector2> TweenMove(this RectTransform transform, Vector2 target, float duration) => Value(() => transform.anchoredPosition, target, duration, value => transform.anchoredPosition = value, transform);
             public static Value<Vector3> TweenMove(this RectTransform transform, Vector3 target, float duration) => Value(() => transform.anchoredPosition3D, target, duration, value => transform.anchoredPosition3D = value, transform);
             public static Value<Vector2> TweenSize(this RectTransform transform, Vector2 target, float duration) => Value(() => transform.sizeDelta, target, duration, value => transform.sizeDelta = value, transform);
@@ -149,6 +151,7 @@ namespace Emp37.Tweening
             public static Value<Color> TweenColor(this Graphic graphic, Color target, float duration) => Value(() => graphic.color, target, duration, value => graphic.color = value, graphic);
             public static Value<float> TweenFill(this Image image, float target, float duration) => Value(() => image.fillAmount, target, duration, value => image.fillAmount = value, image);
             public static Value<float> TweenText(this Text text, string target, float duration) => Value(() => 0F, target.Length, duration, value => { int count = Mathf.Clamp(Mathf.FloorToInt(value), 0, target.Length); text.text = target[..count]; });
+            public static Value<float> TweenText(this TMP_Text text, string target, float duration) => Value(() => 0F, target.Length, duration, value => { int count = Mathf.Clamp(Mathf.FloorToInt(value), 0, target.Length); text.text = target[..count]; });
             public static Value<float> TweenNumber(this Text text, float target, float duration, string format = "0") => Value(() => float.TryParse(text.text, out float value) ? value : 0F, target, duration, value => text.text = value.ToString(format), text);
 
 

@@ -23,9 +23,10 @@ namespace Emp37.Tweening.Element
             private Delta timeMode;
             private float progress;
             private readonly float inverseDuration;
+            private float delay;
+            private bool bootstrapped;
 
             private Loop loop;
-            private float delay;
 
             private readonly Action initTween;
             private readonly Evaluator evaluate;
@@ -75,11 +76,7 @@ namespace Emp37.Tweening.Element
 
             void IElement.Init()
             {
-                  if (IsDestroyed) return;
-
-                  initTween();
-                  Utils.SafeInvoke(onStart);
-                  Phase = Phase.Active;
+                  if (!IsDestroyed) Phase = Phase.Active;
             }
             void IElement.Update()
             {
@@ -93,8 +90,16 @@ namespace Emp37.Tweening.Element
 
                   if (delay > 0F)
                   {
-                        delay = Mathf.Max(delay - deltaTime, 0F);
-                        if (delay != 0F) return;
+                        delay -= deltaTime;
+                        return;
+                  }
+
+                  if (!bootstrapped)
+                  {
+                        initTween();
+                        Utils.SafeInvoke(onStart);
+
+                        bootstrapped = true;
                   }
 
                   progress = Mathf.Min(progress + deltaTime * inverseDuration, 1F);
@@ -105,17 +110,18 @@ namespace Emp37.Tweening.Element
 
                   if (progress < 1F) return;
 
-                  if (loop.Mode == 0 || loop.Count == 0)
+                  if (loop.Mode != Loop.Type.None && loop.Count != 0)
                   {
-                        Phase = Phase.Complete;
-                        Utils.SafeInvoke(onComplete);
+                        if (loop.Count > 0) loop.Count--; // decrement if finite
+                        if (loop.Mode is Loop.Type.Yoyo) (a, b) = (b, a);
+
+                        progress = 0F;
+                        delay = loop.Delay;
                         return;
                   }
-                  if (loop.Count > 0) loop.Count--; // decrement if finite
-                  if (loop.Mode == Loop.Type.Yoyo) (a, b) = (b, a);
 
-                  progress = 0F;
-                  delay = loop.Delay;
+                  Phase = Phase.Complete;
+                  Utils.SafeInvoke(onComplete);
             }
 
             public virtual void Pause()
@@ -137,6 +143,7 @@ namespace Emp37.Tweening.Element
 
             #region F L U E N T
             public virtual Value<T> SetTag(string tag) { Tag = tag; return this; }
+            public virtual Value<T> SetDelay(float value) { delay = value; return this; }
             /// <summary>
             /// Configures this tween to automatically play forward, then reverse once using Yoyo loop.
             /// </summary>

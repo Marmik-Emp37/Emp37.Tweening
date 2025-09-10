@@ -15,11 +15,8 @@ namespace Emp37.Tweening
       public static class Tween
       {
             // E X T E N S I O N S
-            public static void Play(this IElement element, string tag = null)
-            {
-                  element.Tag = tag;
-                  Factory.Play(element);
-            }
+            public static void Play(this IElement element) => Factory.Play(element);
+            public static void PlayWithTag(this IElement element, string tag) { element.Tag = tag; Factory.Play(element); }
             public static Sequence Then(this IElement current, IElement next) => new(current, next);
 
             // E L E M E N T   M E T H O D S

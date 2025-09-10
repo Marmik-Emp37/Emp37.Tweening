@@ -8,7 +8,7 @@ namespace Emp37.Tweening
             public enum Type
             {
                   None,
-                  Repeat,
+                  Restart,
                   Yoyo,
             }
 
