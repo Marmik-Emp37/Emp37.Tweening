@@ -3,6 +3,7 @@ namespace Emp37.Tweening
       public interface IElement
       {
             public string Tag { get; set; }
+
             public Phase Phase { get; }
             public bool IsEmpty { get; }
 

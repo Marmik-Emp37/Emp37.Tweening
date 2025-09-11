@@ -20,37 +20,33 @@ namespace Emp37.Tweening
             public static Sequence Then(this IElement current, IElement next) => new(current, next);
 
             // E L E M E N T   M E T H O D S
-            private static bool ValidateArgs(object init, object target, float duration, object update, object evaluator)
+            internal static void Warn(string message) => Debug.LogWarning($"Tween creation failed: {message}");
+
+            private static bool ValidateArguments(UObject link, object init, object target, float duration, object update, object evaluator)
             {
                   bool isValid = true;
-                  if (init == null) { warn($"Missing required delegate: {nameof(init)}. This delegate provides the starting value for the tween and must not be null."); isValid = false; }
-                  if (target == null) { warn($"Missing required delegate: {nameof(target)}. This delegate provides the target value for the tween and must not be null."); isValid = false; }
-                  if (duration <= 0F) { warn($"Invalid duration: {duration}. Duration must be greater than 0 seconds to perform a tween."); isValid = false; }
-                  if (update == null) { warn($"Missing required delegate: {nameof(update)}. This delegate applies the interpolated value each frame and must not be null."); isValid = false; }
-                  if (evaluator == null) { warn($"Missing required delegate: {nameof(evaluator)}. This delegate defines how the tween interpolates between two values and must not be null."); isValid = false; }
+                  if (link == null) { Warn($"Missing required object '{nameof(link)}' that ties the tween’s lifecycle to a Unity Object."); isValid = false; }
+                  if (init == null) { Warn($"Missing required delegate '{nameof(init)}' that provides a starting value for the tween."); isValid = false; }
+                  if (target == null) { Warn($"Missing required delegate '{nameof(target)}' that provides the target value for the tween."); isValid = false; }
+                  if (duration <= 0F) { Warn($"Invalid duration '{duration}', must be greater than 0s to perform a tween."); isValid = false; }
+                  if (update == null) { Warn($"Missing required delegate '{nameof(update)}' that applies interpolated values to the target each frame."); isValid = false; }
+                  if (evaluator == null) { Warn($"Missing required delegate '{nameof(evaluator)}' that defines how values are interpolated between start and end."); isValid = false; }
                   return isValid;
-                  static void warn(string message) => Debug.LogWarning($"Tween creation failed: {message}");
             }
-            public static Value<T> Value<T>(Func<T> init, T target, float duration, Action<T> update, Value<T>.Evaluator evaluator, UObject link = null) where T : struct => ValidateArgs(init, target, duration, update, evaluator) ? new Value<T>(init, target, duration, update, evaluator, link) : Element.Value<T>.Empty;
-            public static Value<T> Value<T>(Func<T> init, Func<T> dynamicTarget, float duration, Action<T> update, Value<T>.Evaluator evaluator, UObject link = null) where T : struct => ValidateArgs(init, dynamicTarget, duration, update, evaluator) ? new Value<T>(init, dynamicTarget, duration, update, evaluator, link) : Element.Value<T>.Empty;
-
-            public static Value<float> Value(Func<float> init, float target, float duration, Action<float> update, UObject link = null) => Value(init, target, duration, update, Mathf.LerpUnclamped, link);
-            public static Value<float> Value(Func<float> init, Func<float> dynamicTarget, float duration, Action<float> update, UObject link = null) => Value(init, dynamicTarget, duration, update, Mathf.LerpUnclamped, link);
-
-            public static Value<Vector2> Value(Func<Vector2> init, Vector2 target, float duration, Action<Vector2> update, UObject link = null) => Value(init, target, duration, update, Vector2.LerpUnclamped, link);
-            public static Value<Vector2> Value(Func<Vector2> init, Func<Vector2> dynamicTarget, float duration, Action<Vector2> update, UObject link = null) => Value(init, dynamicTarget, duration, update, Vector2.LerpUnclamped, link);
-
-            public static Value<Vector3> Value(Func<Vector3> init, Vector3 target, float duration, Action<Vector3> update, UObject link = null) => Value(init, target, duration, update, Vector3.LerpUnclamped, link);
-            public static Value<Vector3> Value(Func<Vector3> init, Func<Vector3> dynamicTarget, float duration, Action<Vector3> update, UObject link = null) => Value(init, dynamicTarget, duration, update, Vector3.LerpUnclamped, link);
-
-            public static Value<Vector4> Value(Func<Vector4> init, Vector4 target, float duration, Action<Vector4> update, UObject link = null) => Value(init, target, duration, update, Vector4.LerpUnclamped, link);
-            public static Value<Vector4> Value(Func<Vector4> init, Func<Vector4> dynamicTarget, float duration, Action<Vector4> update, UObject link = null) => Value(init, dynamicTarget, duration, update, Vector4.LerpUnclamped, link);
-
-            public static Value<Quaternion> Value(Func<Quaternion> init, Quaternion target, float duration, Action<Quaternion> update, UObject link = null) => Value(init, target, duration, update, Quaternion.LerpUnclamped, link);
-            public static Value<Quaternion> Value(Func<Quaternion> init, Func<Quaternion> dynamicTarget, float duration, Action<Quaternion> update, UObject link = null) => Value(init, dynamicTarget, duration, update, Quaternion.LerpUnclamped, link);
-
-            public static Value<Color> Value(Func<Color> init, Color target, float duration, Action<Color> update, UObject link = null) => Value(init, target, duration, update, Color.LerpUnclamped, link);
-            public static Value<Color> Value(Func<Color> init, Func<Color> dynamicTarget, float duration, Action<Color> update, UObject link = null) => Value(init, dynamicTarget, duration, update, Color.LerpUnclamped, link);
+            public static Value<T> Value<T>(UObject link, Func<T> init, T target, float duration, Action<T> update, Value<T>.Evaluator evaluator) where T : struct => ValidateArguments(link, init, target, duration, update, evaluator) ? new Value<T>(link, init, target, duration, update, evaluator) : Element.Value<T>.Empty;
+            public static Value<T> Value<T>(UObject link, Func<T> init, Func<T> dynamicTarget, float duration, Action<T> update, Value<T>.Evaluator evaluator) where T : struct => ValidateArguments(link, init, dynamicTarget, duration, update, evaluator) ? new Value<T>(link, init, dynamicTarget, duration, update, evaluator) : Element.Value<T>.Empty;
+            public static Value<float> Value(UObject link, Func<float> init, float target, float duration, Action<float> update) => Value(link, init, target, duration, update, Mathf.LerpUnclamped);
+            public static Value<float> Value(UObject link, Func<float> init, Func<float> dynamicTarget, float duration, Action<float> update) => Value(link, init, dynamicTarget, duration, update, Mathf.LerpUnclamped);
+            public static Value<Vector2> Value(UObject link, Func<Vector2> init, Vector2 target, float duration, Action<Vector2> update) => Value(link, init, target, duration, update, Vector2.LerpUnclamped);
+            public static Value<Vector2> Value(UObject link, Func<Vector2> init, Func<Vector2> dynamicTarget, float duration, Action<Vector2> update) => Value(link, init, dynamicTarget, duration, update, Vector2.LerpUnclamped);
+            public static Value<Vector3> Value(UObject link, Func<Vector3> init, Vector3 target, float duration, Action<Vector3> update) => Value(link, init, target, duration, update, Vector3.LerpUnclamped);
+            public static Value<Vector3> Value(UObject link, Func<Vector3> init, Func<Vector3> dynamicTarget, float duration, Action<Vector3> update) => Value(link, init, dynamicTarget, duration, update, Vector3.LerpUnclamped);
+            public static Value<Vector4> Value(UObject link, Func<Vector4> init, Vector4 target, float duration, Action<Vector4> update) => Value(link, init, target, duration, update, Vector4.LerpUnclamped);
+            public static Value<Vector4> Value(UObject link, Func<Vector4> init, Func<Vector4> dynamicTarget, float duration, Action<Vector4> update) => Value(link, init, dynamicTarget, duration, update, Vector4.LerpUnclamped);
+            public static Value<Quaternion> Value(UObject link, Func<Quaternion> init, Quaternion target, float duration, Action<Quaternion> update) => Value(link, init, target, duration, update, Quaternion.LerpUnclamped);
+            public static Value<Quaternion> Value(UObject link, Func<Quaternion> init, Func<Quaternion> dynamicTarget, float duration, Action<Quaternion> update) => Value(link, init, dynamicTarget, duration, update, Quaternion.LerpUnclamped);
+            public static Value<Color> Value(UObject link, Func<Color> init, Color target, float duration, Action<Color> update) => Value(link, init, target, duration, update, Color.LerpUnclamped);
+            public static Value<Color> Value(UObject link, Func<Color> init, Func<Color> dynamicTarget, float duration, Action<Color> update) => Value(link, init, dynamicTarget, duration, update, Color.LerpUnclamped);
 
             public static Parallel Parallel(params IElement[] elements) => new(elements);
             public static Parallel Parallel(IEnumerable<IElement> elements) => new(elements);

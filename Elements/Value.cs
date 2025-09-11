@@ -23,17 +23,15 @@ namespace Emp37.Tweening.Element
             private Delta timeMode;
             private float progress;
             private readonly float inverseDuration;
-            private float delay;
-            private bool bootstrapped;
 
             private Loop loop;
+            private int loopCounter;
 
             private readonly Action initTween;
             private readonly Evaluator evaluate;
             private Function easingFunction;
             private readonly Action<T> updateTween;
 
-            private readonly bool isLinked;
             private readonly UObject linkedTarget; // auto-kill tween if this object is destroyed
 
             private Action onStart;
@@ -42,30 +40,22 @@ namespace Emp37.Tweening.Element
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
-            public bool IsDestroyed => isLinked && linkedTarget == null;
 
-
-            private Value(float duration, Action<T> update, Evaluator evaluator, UObject link)
+            private Value(UObject link, float duration, Action<T> update, Evaluator evaluator)
             {
+                  linkedTarget = link;
                   inverseDuration = 1F / duration;
-
                   updateTween = update;
                   evaluate = evaluator;
 
-                  if (link != null)
-                  {
-                        linkedTarget = link;
-                        isLinked = true;
-                  }
-
                   easingFunction = Linear;
             }
-            internal Value(Func<T> init, T target, float duration, Action<T> update, Evaluator evaluator, UObject link = null) : this(duration, update, evaluator, link)
+            internal Value(UObject link, Func<T> init, T target, float duration, Action<T> update, Evaluator evaluator) : this(link, duration, update, evaluator)
             {
                   b = target;
                   initTween = () => a = init();
             }
-            internal Value(Func<T> init, Func<T> dynamicTarget, float duration, Action<T> update, Evaluator evaluator, UObject link = null) : this(duration, update, evaluator, link)
+            internal Value(UObject link, Func<T> init, Func<T> dynamicTarget, float duration, Action<T> update, Evaluator evaluator) : this(link, duration, update, evaluator)
             {
                   initTween = () =>
                   {
@@ -76,33 +66,21 @@ namespace Emp37.Tweening.Element
 
             void IElement.Init()
             {
-                  if (!IsDestroyed) Phase = Phase.Active;
+                  if (linkedTarget == null) return;
+
+                  initTween();
+                  Utils.SafeInvoke(onStart);
+                  Phase = Phase.Active;
             }
             void IElement.Update()
             {
-                  if (IsDestroyed)
-                  {
-                        Kill();
-                        return;
-                  }
+                  if (linkedTarget == null) { Kill(); return; }
 
                   float deltaTime = (timeMode == Delta.Unscaled) ? Time.unscaledDeltaTime : Time.deltaTime;
-
-                  if (delay > 0F)
-                  {
-                        delay -= deltaTime;
-                        return;
-                  }
-
-                  if (!bootstrapped)
-                  {
-                        initTween();
-                        Utils.SafeInvoke(onStart);
-
-                        bootstrapped = true;
-                  }
-
                   progress = Mathf.Min(progress + deltaTime * inverseDuration, 1F);
+
+                  if (progress < 0F) return; // processing delay
+
                   float eased = easingFunction(progress);
                   T value = evaluate(a, b, eased);
                   updateTween(value);
@@ -110,18 +88,18 @@ namespace Emp37.Tweening.Element
 
                   if (progress < 1F) return;
 
-                  if (loop.Mode != Loop.Type.None && loop.Count != 0)
+                  if (loop.Mode != Loop.Type.None && loopCounter != 0)
                   {
-                        if (loop.Count > 0) loop.Count--; // decrement if finite
+                        if (loopCounter > 0) loopCounter--; // decrement if finite
                         if (loop.Mode is Loop.Type.Yoyo) (a, b) = (b, a);
 
-                        progress = 0F;
-                        delay = loop.Delay;
-                        return;
+                        progress = loop.Delay > 0F ? -loop.Delay : 0F;
                   }
-
-                  Phase = Phase.Complete;
-                  Utils.SafeInvoke(onComplete);
+                  else
+                  {
+                        Phase = Phase.Complete;
+                        Utils.SafeInvoke(onComplete);
+                  }
             }
 
             public virtual void Pause()
@@ -133,6 +111,7 @@ namespace Emp37.Tweening.Element
                   if (Phase == Phase.Paused) Phase = Phase.Active;
             }
             public virtual void Kill() => Phase = Phase.None;
+
             /// <summary>
             /// Stops looping and allows the current cycle to complete naturally.
             /// </summary>
@@ -143,7 +122,6 @@ namespace Emp37.Tweening.Element
 
             #region F L U E N T
             public virtual Value<T> SetTag(string tag) { Tag = tag; return this; }
-            public virtual Value<T> SetDelay(float value) { delay = value; return this; }
             /// <summary>
             /// Configures this tween to automatically play forward, then reverse once using Yoyo loop.
             /// </summary>
@@ -161,7 +139,7 @@ namespace Emp37.Tweening.Element
             /// <summary>
             /// Configures this tween to repeat according to a specified loop strategy.
             /// </summary>
-            public virtual Value<T> SetLoop(in Loop config) { loop = config; return this; }
+            public virtual Value<T> SetLoop(in Loop config) { loop = config; loopCounter = loop.Cycles; return this; }
             /// <summary>
             /// Sets a new target value for this tween. The current progress will interpolate toward this new target.
             /// </summary>
