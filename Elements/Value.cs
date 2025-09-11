@@ -25,7 +25,7 @@ namespace Emp37.Tweening.Element
             private readonly float inverseDuration;
 
             private Loop loop;
-            private int loopCounter;
+            private int loopCount;
 
             private readonly Action initTween;
             private readonly Evaluator evaluate;
@@ -40,6 +40,7 @@ namespace Emp37.Tweening.Element
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
+            public bool IsDestroyed => linkedTarget == null;
 
             private Value(UObject link, float duration, Action<T> update, Evaluator evaluator)
             {
@@ -50,23 +51,23 @@ namespace Emp37.Tweening.Element
 
                   easingFunction = Linear;
             }
-            internal Value(UObject link, Func<T> init, T target, float duration, Action<T> update, Evaluator evaluator) : this(link, duration, update, evaluator)
+            internal Value(UObject link, Func<T> capture, T target, float duration, Action<T> update, Evaluator evaluator) : this(link, duration, update, evaluator)
             {
+                  initTween = () => a = capture();
                   b = target;
-                  initTween = () => a = init();
             }
-            internal Value(UObject link, Func<T> init, Func<T> dynamicTarget, float duration, Action<T> update, Evaluator evaluator) : this(link, duration, update, evaluator)
+            internal Value(UObject link, Func<T> capture, Func<T> dynamicTarget, float duration, Action<T> update, Evaluator evaluator) : this(link, duration, update, evaluator)
             {
                   initTween = () =>
                   {
-                        a = init();
+                        a = capture();
                         b = dynamicTarget();
                   };
             }
 
             void IElement.Init()
             {
-                  if (linkedTarget == null) return;
+                  if (IsDestroyed) return;
 
                   initTween();
                   Utils.SafeInvoke(onStart);
@@ -74,7 +75,7 @@ namespace Emp37.Tweening.Element
             }
             void IElement.Update()
             {
-                  if (linkedTarget == null) { Kill(); return; }
+                  if (IsDestroyed) { Kill(); return; }
 
                   float deltaTime = (timeMode == Delta.Unscaled) ? Time.unscaledDeltaTime : Time.deltaTime;
                   progress = Mathf.Min(progress + deltaTime * inverseDuration, 1F);
@@ -86,20 +87,19 @@ namespace Emp37.Tweening.Element
                   updateTween(value);
                   Utils.SafeInvoke(onUpdate, eased);
 
-                  if (progress < 1F) return;
+                  if (progress < 1F) return; // complete iteration
 
-                  if (loop.Mode != Loop.Type.None && loopCounter != 0)
+                  if (loop.Mode != Loop.Type.None && loopCount != 0)
                   {
-                        if (loopCounter > 0) loopCounter--; // decrement if finite
-                        if (loop.Mode is Loop.Type.Yoyo) (a, b) = (b, a);
+                        if (loopCount > 0) loopCount--; // decrement if finite
+                        if (loop.Mode is Loop.Type.Yoyo) (b, a) = (a, b);
 
                         progress = loop.Delay > 0F ? -loop.Delay : 0F;
+                        return;
                   }
-                  else
-                  {
-                        Phase = Phase.Complete;
-                        Utils.SafeInvoke(onComplete);
-                  }
+
+                  Phase = Phase.Complete;
+                  Utils.SafeInvoke(onComplete);
             }
 
             public virtual void Pause()
@@ -110,23 +110,21 @@ namespace Emp37.Tweening.Element
             {
                   if (Phase == Phase.Paused) Phase = Phase.Active;
             }
-            public virtual void Kill() => Phase = Phase.None;
-
+            public virtual void Kill()
+            {
+                  Phase = Phase.None;
+            }
             /// <summary>
             /// Stops looping and allows the current cycle to complete naturally.
             /// </summary>
             public virtual void TerminateLoop() => SetLoop(Loop.Default);
 
-            public override string ToString() => $"{nameof(Value<T>)}<{typeof(T).Name}> (Phase: {Phase}, Progress: {progress:P0})";
-
-
-            #region F L U E N T
+            #region F L U E N T   A P I
             public virtual Value<T> SetTag(string tag) { Tag = tag; return this; }
             /// <summary>
-            /// Configures this tween to automatically play forward, then reverse once using Yoyo loop.
+            /// Sets a new target value for this tween. The current progress will interpolate toward this new target.
             /// </summary>
-            /// <param name="delay">In seconds.</param>
-            public virtual Value<T> SetReturnOnce(float delay = 0F) => SetLoop(new(Loop.Type.Yoyo, 1, delay));
+            public virtual Value<T> SetTarget(T value) { b = value; return this; }
             /// <summary>
             /// Sets the easing function using a predefined easing type.
             /// </summary>
@@ -139,28 +137,21 @@ namespace Emp37.Tweening.Element
             /// <summary>
             /// Configures this tween to repeat according to a specified loop strategy.
             /// </summary>
-            public virtual Value<T> SetLoop(in Loop config) { loop = config; loopCounter = loop.Cycles; return this; }
+            public virtual Value<T> SetLoop(in Loop config) { loop = config; loopCount = config.Cycles; return this; }
             /// <summary>
-            /// Sets a new target value for this tween. The current progress will interpolate toward this new target.
+            /// Configures this tween to automatically play forward, then reverse once using Yoyo loop.
             /// </summary>
-            public virtual Value<T> SetTarget(T value) { b = value; return this; }
-            /// <summary>
-            /// Sets the time scale mode used by this tween.
-            /// </summary>
+            /// <param name="delay">In seconds.</param>
+            public virtual Value<T> SetReturnOnce(float delay = 0F) => SetLoop(new(Loop.Type.Yoyo, 1, delay));
             public virtual Value<T> SetTimeMode(Delta type) { timeMode = type; return this; }
-            /// <summary>
-            /// Registers a callback to invoke once when the tween starts playing.
-            /// </summary>
             public virtual Value<T> OnStart(Action action) { onStart = action; return this; }
-            /// <summary>
-            /// Registers a callback to invoke during each update of the tween.
-            /// </summary>
-            /// <param name="action">The callback that receives the eased progress value (0–1) each frame.</param>
+            /// <param name="action">
+            /// The callback that receives the eased progress value (0 - 1) each frame.
+            /// </param>
             public virtual Value<T> OnUpdate(Action<float> action) { onUpdate = action; return this; }
-            /// <summary>
-            /// Registers a callback to invoke once when the tween completes.
-            /// </summary>
             public virtual Value<T> OnComplete(Action action) { onComplete = action; return this; }
             #endregion
+
+            public override string ToString() => $"{nameof(Value<T>)}<{typeof(T).Name}> [Tag: {Tag ?? "None"} | Phase: {Phase} | Progress: {progress:P0} | A: {a} - B: {b}]";
       }
 }

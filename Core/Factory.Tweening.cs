@@ -1,6 +1,4 @@
-﻿using System;
-
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Emp37.Tweening
 {
@@ -25,7 +23,11 @@ namespace Emp37.Tweening
                         if (element.Phase is not (Phase.Complete or Phase.None)) continue;
 
                         tweens.RemoveAt(i);
-                        if (tweens.Count == 0) enabled = false;
+                        if (tweens.Count == 0)
+                        {
+                              enabled = false;
+                              return; // short-circuit if multiple tweens finish at the same frame
+                        }
                   }
             }
 
@@ -38,33 +40,18 @@ namespace Emp37.Tweening
                   if (!Application.isPlaying || element.IsEmpty) return;
                   if (!tweens.Add(element))
                   {
-                        Debug.LogWarning($"{typeof(Factory).FullName}: Active tween limit ({MaxTweens}) reached. Increase {nameof(MaxTweens)} to allow more tweens.");
+                        Logger.Warning($"{typeof(Factory).FullName}: Active tween limit ({MaxTweens}) reached. Increase {nameof(MaxTweens)} to allow more tweens.");
                         return;
                   }
                   element.Init();
                   instance.enabled = true;
             }
-
-            private static void ProcessTweens(string tag, Action<IElement> action)
-            {
-                  if (string.IsNullOrEmpty(tag))
-                  {
-                        tweens.ForEach(action);
-                  }
-                  else
-                  {
-                        tweens.ForEach(element =>
-                        {
-                              if (!string.IsNullOrEmpty(element.Tag) && string.Equals(element.Tag, tag, StringComparison.Ordinal))
-                              {
-                                    action(element);
-                              }
-                        });
-                  }
-            }
-            public static void Pause(string tag = null) => ProcessTweens(tag, element => element.Pause());
-            public static void Resume(string tag = null) => ProcessTweens(tag, element => element.Resume());
-            public static void Kill(string tag = null) => ProcessTweens(tag, element => element.Kill());
+            public static void Pause() => tweens.ForEach(element => element.Pause());
+            public static void Resume() => tweens.ForEach(element => element.Resume());
+            public static void Kill() => tweens.ForEach(element => element.Kill());
+            public static void Pause(string tag) => tweens.ForEachTagged(tag, element => element.Pause());
+            public static void Resume(string tag) => tweens.ForEachTagged(tag, element => element.Resume());
+            public static void Kill(string tag) => tweens.ForEachTagged(tag, element => element.Kill());
 
             static partial void OnFactoryDestroy() => tweens.Clear();
       }

@@ -20,7 +20,7 @@ namespace Emp37.Tweening
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                         if (limit != value)
                         {
-                              Debug.LogWarning($"Requested capacity {value} is below active count ({Count}). Using {limit}.");
+                              Logger.Warning($"Requested capacity {value} is below active count ({Count}). Using {limit}.");
                         }
 #endif
                         Array.Resize(ref elements, limit);
@@ -53,6 +53,18 @@ namespace Emp37.Tweening
                   for (int i = 0; i < Count; i++)
                   {
                         action(elements[i]);
+                  }
+            }
+            public void ForEachTagged(string tag, Action<IElement> action)
+            {
+                  if (string.IsNullOrEmpty(tag)) return;
+                  for (int i = 0; i < Count; i++)
+                  {
+                        var element = elements[i];
+                        if (!string.IsNullOrEmpty(element.Tag) && string.Equals(element.Tag, tag, StringComparison.Ordinal))
+                        {
+                              action(element);
+                        }
                   }
             }
             private bool InRange(int index) => (uint) index < (uint) Count;

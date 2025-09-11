@@ -12,37 +12,31 @@ namespace Emp37.Tweening.Element
             public bool IsEmpty => current == null && queue.Count == 0;
 
             internal Sequence() => queue = new();
-            internal Sequence(params IElement[] elements) : this() => Append(elements);
             internal Sequence(IEnumerable<IElement> elements) : this() => Append(elements);
+            internal Sequence(params IElement[] elements) : this() => Append(elements);
 
             public Sequence Append(IElement element)
             {
                   if (!element.IsEmpty)
                   {
-                        queue.Enqueue(element);
-                  }
-                  return this;
-            }
-            public Sequence Append(params IElement[] elements)
-            {
-                  for (int i = 0; i < elements.Length; i++)
-                  {
-                        Append(elements[i]);
+                        if (current == null) current = element;
+                        else queue.Enqueue(element);
                   }
                   return this;
             }
             public Sequence Append(IEnumerable<IElement> elements)
             {
-                  foreach (var e in elements)
+                  foreach (var element in elements)
                   {
-                        Append(e);
+                        Append(element);
                   }
                   return this;
             }
+            public Sequence Append(params IElement[] elements) => Append((IEnumerable<IElement>) elements);
 
             void IElement.Init()
             {
-                  ActivateNext();
+                  current.Init();
                   Phase = Phase.Active;
             }
             void IElement.Update()
@@ -57,7 +51,8 @@ namespace Emp37.Tweening.Element
                   }
                   else
                   {
-                        ActivateNext();
+                        current = queue.Dequeue();
+                        current.Init();
                   }
             }
 
@@ -80,12 +75,6 @@ namespace Emp37.Tweening.Element
                   current?.Kill(); current = null;
                   queue.Clear();
                   Phase = Phase.None;
-            }
-
-            private void ActivateNext()
-            {
-                  current = queue.Dequeue();
-                  current.Init();
             }
       }
 }
