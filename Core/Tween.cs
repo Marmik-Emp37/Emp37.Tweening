@@ -17,18 +17,18 @@ namespace Emp37.Tweening
             // E X T E N S I O N S
             public static void Play(this IElement element) => Factory.Play(element);
             public static void PlayWithTag(this IElement element, string tag) { element.Tag = tag; Factory.Play(element); }
-            public static Sequence Then(this IElement current, IElement next) => new(current, next);
+            public static Sequence Then(this IElement current, IElement next) => Sequence(current, next);
 
             // E L E M E N T   M E T H O D S
             private static bool ValidateArguments(UObject link, object capture, object target, float duration, object update, object evaluator)
             {
                   bool isValid = true;
-                  if (link == null) { Logger.RejectTween($"Missing '{nameof(link)}'. Object required to manage a tween."); isValid = false; }
-                  if (capture == null) { Logger.RejectTween($"Missing '{nameof(capture)}'. Delegate required to capture a start value for the tween."); isValid = false; }
-                  if (target == null) { Logger.RejectTween($"Missing '{nameof(target)}'. Object required to manage a tween."); isValid = false; }
-                  if (duration <= 0F) { Logger.RejectTween($"Invalid duration '{duration}', must be greater than 0s to perform a tween."); isValid = false; }
-                  if (update == null) { Logger.RejectTween($"Missing '{nameof(update)}'. Delegate that applies interpolated values to the target each frame."); isValid = false; }
-                  if (evaluator == null) { Logger.RejectTween($"Missing '{nameof(evaluator)}'. Delegate that defines how values are interpolated."); isValid = false; }
+                  if (link == null) { Log.RejectTween($"Missing '{nameof(link)}'. Object required to manage a tween."); isValid = false; }
+                  if (capture == null) { Log.RejectTween($"Missing '{nameof(capture)}'. Delegate required to capture a start value for the tween."); isValid = false; }
+                  if (target == null) { Log.RejectTween($"Missing '{nameof(target)}'. Object required to manage a tween."); isValid = false; }
+                  if (duration <= 0F) { Log.RejectTween($"Invalid duration '{duration}', must be greater than 0s to perform a tween."); isValid = false; }
+                  if (update == null) { Log.RejectTween($"Missing '{nameof(update)}'. Delegate that applies interpolated values to the target each frame."); isValid = false; }
+                  if (evaluator == null) { Log.RejectTween($"Missing '{nameof(evaluator)}'. Delegate that defines how values are interpolated."); isValid = false; }
                   return isValid;
             }
             public static Value<T> Value<T>(UObject link, Func<T> capture, T target, float duration, Action<T> update, Value<T>.Evaluator evaluator) where T : struct => ValidateArguments(link, capture, target, duration, update, evaluator) ? new Value<T>(link, capture, target, duration, update, evaluator) : Element.Value<T>.Empty;
@@ -48,8 +48,9 @@ namespace Emp37.Tweening
 
             public static Parallel Parallel(params IElement[] elements) => new(elements);
             public static Parallel Parallel(IEnumerable<IElement> elements) => new(elements);
-            public static Delay Delay(Func<bool> waitUntil) => new(waitUntil);
-            public static Delay Delay(float value, Delta mode = Delta.Scaled, Func<bool> waitUntil = null) => new(value, mode, waitUntil);
+            public static Delay Delay(float duration, Delta mode = Delta.Scaled) => new(duration, mode);
+            public static Delay Delay(Func<bool> until) => new(until);
+            public static Delay Delay(float duration, Func<bool> until, Delta mode = Delta.Scaled) => new(duration, until, mode);
             public static Sequence Sequence(params IElement[] elements) => new(elements);
             public static Sequence Sequence(IEnumerable<IElement> elements) => new(elements);
             public static Invoke Invoke(Action action) => new(action);

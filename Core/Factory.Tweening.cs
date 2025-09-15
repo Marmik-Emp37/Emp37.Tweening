@@ -40,7 +40,7 @@ namespace Emp37.Tweening
                   if (!Application.isPlaying || element.IsEmpty) return;
                   if (!tweens.Add(element))
                   {
-                        Logger.Warning($"{typeof(Factory).FullName}: Active tween limit ({MaxTweens}) reached. Increase {nameof(MaxTweens)} to allow more tweens.");
+                        Log.Warning($"{typeof(Factory).FullName}: Active tween limit ({MaxTweens}) reached. Increase {nameof(MaxTweens)} to allow more tweens.");
                         return;
                   }
                   element.Init();

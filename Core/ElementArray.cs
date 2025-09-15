@@ -20,7 +20,7 @@ namespace Emp37.Tweening
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                         if (limit != value)
                         {
-                              Logger.Warning($"Requested capacity {value} is below active count ({Count}). Using {limit}.");
+                              Log.Warning($"Requested capacity {value} is below active count ({Count}). Using {limit}.");
                         }
 #endif
                         Array.Resize(ref elements, limit);

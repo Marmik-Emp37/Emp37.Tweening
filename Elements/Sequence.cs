@@ -4,23 +4,23 @@ namespace Emp37.Tweening.Element
 {
       public sealed class Sequence : IElement
       {
-            private readonly Queue<IElement> queue;
+            private readonly Queue<IElement> elements;
             private IElement current;
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
-            public bool IsEmpty => current == null && queue.Count == 0;
+            public bool IsEmpty => current == null && elements.Count == 0;
 
-            internal Sequence() => queue = new();
+
+            internal Sequence() => elements = new();
             internal Sequence(IEnumerable<IElement> elements) : this() => Append(elements);
-            internal Sequence(params IElement[] elements) : this() => Append(elements);
 
             public Sequence Append(IElement element)
             {
                   if (!element.IsEmpty)
                   {
                         if (current == null) current = element;
-                        else queue.Enqueue(element);
+                        else elements.Enqueue(element);
                   }
                   return this;
             }
@@ -44,14 +44,14 @@ namespace Emp37.Tweening.Element
                   if (current.Phase is Phase.Active) current.Update();
                   if (current.Phase is not Phase.Complete and not Phase.None) return;
 
-                  if (queue.Count == 0)
+                  if (elements.Count == 0)
                   {
                         current = null;
                         Phase = Phase.Complete;
                   }
                   else
                   {
-                        current = queue.Dequeue();
+                        current = elements.Dequeue();
                         current.Init();
                   }
             }
@@ -73,7 +73,7 @@ namespace Emp37.Tweening.Element
             public void Kill()
             {
                   current?.Kill(); current = null;
-                  queue.Clear();
+                  elements.Clear();
                   Phase = Phase.None;
             }
       }

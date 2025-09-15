@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace Emp37.Tweening
 {
-      public static class Utils
+      internal static class Utils
       {
-            public static void SafeInvoke(Action callback)
+            internal static void SafeInvoke(Action callback)
             {
                   try
                   {
@@ -14,10 +14,10 @@ namespace Emp37.Tweening
                   }
                   catch (Exception ex)
                   {
-                        Debug.LogException(ex);
+                        Log.Exception(ex);
                   }
             }
-            public static void SafeInvoke<T>(Action<T> callback, T argument)
+            internal static void SafeInvoke<T>(Action<T> callback, T argument)
             {
                   try
                   {
@@ -25,8 +25,22 @@ namespace Emp37.Tweening
                   }
                   catch (Exception ex)
                   {
-                        Debug.LogException(ex);
+                        Log.Exception(ex);
                   }
             }
+            internal static T SafeInvoke<T>(Func<T> callback)
+            {
+                  try
+                  {
+                        return callback();
+                  }
+                  catch (Exception ex)
+                  {
+                        Log.Exception(ex);
+                        return default;
+                  }
+            }
+
+            internal static string Info(IElement element, params string[] properties) => $"{element.GetType().Name} [Tag: {element.Tag ?? "None"} | Phase: {element.Phase}" + (properties != null && properties.Length > 0 ? " | " + string.Join(" | ", properties) : string.Empty) + "]";
       }
 }

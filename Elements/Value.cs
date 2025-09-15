@@ -42,6 +42,7 @@ namespace Emp37.Tweening.Element
             public Phase Phase { get; private set; }
             public bool IsDestroyed => linkedTarget == null;
 
+
             private Value(UObject link, float duration, Action<T> update, Evaluator evaluator)
             {
                   linkedTarget = link;
@@ -152,6 +153,6 @@ namespace Emp37.Tweening.Element
             public virtual Value<T> OnComplete(Action action) { onComplete = action; return this; }
             #endregion
 
-            public override string ToString() => $"{nameof(Value<T>)}<{typeof(T).Name}> [Tag: {Tag ?? "None"} | Phase: {Phase} | Progress: {progress:P0} | A: {a} - B: {b}]";
+            public override string ToString() => Utils.Info(this, $"Progress: {progress:P0}", $"A: {a} - B: {b}]", $"Duration: {inverseDuration / 1F}", $"Mode: {timeMode}");
       }
 }

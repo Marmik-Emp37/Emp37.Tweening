@@ -4,48 +4,43 @@ namespace Emp37.Tweening.Element
 {
       public sealed class Parallel : IElement
       {
-            private readonly List<IElement> list;
+            const int SwapStrategyThreshold = 15;
+
+            private readonly List<IElement> elements;
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
-            public bool IsEmpty => list.Count == 0;
+            public bool IsEmpty => elements.Count == 0;
 
-            private Parallel() => list = new();
-            internal Parallel(params IElement[] elements) : this()
+
+            internal Parallel(IEnumerable<IElement> elements)
             {
-                  for (int i = 0; i < elements.Length; i++)
-                  {
-                        var element = elements[i];
-                        if (!element.IsEmpty) list.Add(element);
-                  }
-            }
-            internal Parallel(IEnumerable<IElement> elements) : this()
-            {
+                  this.elements = new();
                   foreach (var element in elements)
                   {
-                        if (!element.IsEmpty) list.Add(element);
+                        if (!element.IsEmpty)
+                        {
+                              this.elements.Add(element);
+                        }
                   }
             }
 
             void IElement.Init()
             {
-                  foreach (var element in list) element.Init();
+                  foreach (var element in elements) element.Init();
                   Phase = Phase.Active;
             }
             void IElement.Update()
             {
-                  for (int i = list.Count - 1; i >= 0; i--)
+                  for (int i = elements.Count - 1; i >= 0; i--)
                   {
-                        IElement element = list[i];
+                        IElement current = elements[i];
 
-                        if (element.Phase is Phase.Active) element.Update();
-                        if (element.Phase is not Phase.Complete and not Phase.None) continue;
+                        if (current.Phase is Phase.Active) current.Update();
+                        if (current.Phase is not Phase.Complete and not Phase.None) continue;
 
-                        int last = list.Count - 1;
-                        list[i] = list[last];
-                        list.RemoveAt(last);
-
-                        if (list.Count == 0) Phase = Phase.Complete;
+                        FastRemoveElement(i);
+                        if (elements.Count == 0) Phase = Phase.Complete;
                   }
             }
 
@@ -53,21 +48,32 @@ namespace Emp37.Tweening.Element
             {
                   if (Phase != Phase.Active) return;
 
-                  foreach (var element in list) element.Pause();
+                  foreach (var element in elements) element.Pause();
                   Phase = Phase.Paused;
             }
             public void Resume()
             {
                   if (Phase != Phase.Paused) return;
 
-                  foreach (var element in list) element.Resume();
+                  foreach (var element in elements) element.Resume();
                   Phase = Phase.Active;
             }
             public void Kill()
             {
-                  foreach (var element in list) element.Kill();
-                  list.Clear();
+                  foreach (var element in elements) element.Kill();
+                  elements.Clear();
                   Phase = Phase.None;
+            }
+
+            private void FastRemoveElement(int index)
+            {
+                  if (elements.Count > SwapStrategyThreshold)
+                  {
+                        int last = elements.Count - 1;
+                        elements[index] = elements[last];
+                        index = last;
+                  }
+                  elements.RemoveAt(index);
             }
       }
 }
