@@ -23,12 +23,12 @@ namespace Emp37.Tweening
             private static bool ValidateArguments(UObject link, object capture, object target, float duration, object update, object evaluator)
             {
                   bool isValid = true;
-                  if (link == null) { Log.RejectTween($"Missing '{nameof(link)}'. Object required to manage a tween."); isValid = false; }
-                  if (capture == null) { Log.RejectTween($"Missing '{nameof(capture)}'. Delegate required to capture a start value for the tween."); isValid = false; }
-                  if (target == null) { Log.RejectTween($"Missing '{nameof(target)}'. Object required to manage a tween."); isValid = false; }
-                  if (duration <= 0F) { Log.RejectTween($"Invalid duration '{duration}', must be greater than 0s to perform a tween."); isValid = false; }
-                  if (update == null) { Log.RejectTween($"Missing '{nameof(update)}'. Delegate that applies interpolated values to the target each frame."); isValid = false; }
-                  if (evaluator == null) { Log.RejectTween($"Missing '{nameof(evaluator)}'. Delegate that defines how values are interpolated."); isValid = false; }
+                  if (link == null) { Log.InvalidTween($"Missing '{nameof(link)}'. Object required to manage a tween."); isValid = false; }
+                  if (capture == null) { Log.InvalidTween($"Missing '{nameof(capture)}'. Delegate required to capture a start value for the tween."); isValid = false; }
+                  if (target == null) { Log.InvalidTween($"Missing '{nameof(target)}'. Object required to manage a tween."); isValid = false; }
+                  if (duration <= 0F) { Log.InvalidTween($"Invalid duration '{duration}', must be greater than 0s to perform a tween."); isValid = false; }
+                  if (update == null) { Log.InvalidTween($"Missing '{nameof(update)}'. Delegate that applies interpolated values to the target each frame."); isValid = false; }
+                  if (evaluator == null) { Log.InvalidTween($"Missing '{nameof(evaluator)}'. Delegate that defines how values are interpolated."); isValid = false; }
                   return isValid;
             }
             public static Value<T> Value<T>(UObject link, Func<T> capture, T target, float duration, Action<T> update, Value<T>.Evaluator evaluator) where T : struct => ValidateArguments(link, capture, target, duration, update, evaluator) ? new Value<T>(link, capture, target, duration, update, evaluator) : Element.Value<T>.Empty;

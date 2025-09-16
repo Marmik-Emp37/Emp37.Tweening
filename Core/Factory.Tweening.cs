@@ -11,7 +11,8 @@ namespace Emp37.Tweening
             /// </summary>
             /// <remarks>Setting this value resizes the underlying pool. If the new value is less than the current active tween count, the capacity is clamped to prevent data loss.</remarks>
             public static int MaxTweens { get => tweens.Capacity; set => tweens.Capacity = value; }
-            public int AvailableTweens => MaxTweens - tweens.Count;
+            public int ActiveTweens => tweens.Count;
+            public int AvailableTweens => MaxTweens - ActiveTweens;
 
             private void LateUpdate()
             {

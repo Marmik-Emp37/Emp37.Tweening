@@ -12,6 +12,6 @@ namespace Emp37.Tweening
             public static void Warning(string message) { if (Enabled) Debug.LogWarning(message); }
             public static void Exception(Exception exception) { if (Enabled) Debug.LogException(exception); }
 
-            public static void RejectTween(string message) => Warning($"Tween creation failed: {message}");
+            internal static void InvalidTween(string message) => Warning($"Tween creation failed: {message}");
       }
 }

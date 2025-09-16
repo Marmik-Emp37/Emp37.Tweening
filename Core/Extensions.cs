@@ -79,7 +79,7 @@ namespace Emp37.Tweening
 
                   if (!renderer.sharedMaterial.HasProperty(property))
                   {
-                        Log.RejectTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
+                        Log.InvalidTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
                         return Element.Value<float>.Empty;
                   }
 
@@ -93,7 +93,7 @@ namespace Emp37.Tweening
 
                   if (!renderer.sharedMaterial.HasProperty(property))
                   {
-                        Log.RejectTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
+                        Log.InvalidTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
                         return Element.Value<Color>.Empty;
                   }
 
@@ -107,7 +107,7 @@ namespace Emp37.Tweening
 
                   if (!renderer.sharedMaterial.HasProperty(property))
                   {
-                        Log.RejectTween ($"Renderer '{renderer.name}' does not contain float property '{property}'.");
+                        Log.InvalidTween ($"Renderer '{renderer.name}' does not contain float property '{property}'.");
                         return Element.Value<Vector4>.Empty;
                   }
 
@@ -122,7 +122,7 @@ namespace Emp37.Tweening
             {
                   if (!material.HasProperty(property))
                   {
-                        Log.RejectTween($"Material '{material.name}' does not contain float property '{property}'.");
+                        Log.InvalidTween($"Material '{material.name}' does not contain float property '{property}'.");
                         return Element.Value<float>.Empty;
                   }
 
@@ -133,7 +133,7 @@ namespace Emp37.Tweening
             {
                   if (!material.HasProperty(property))
                   {
-                        Log.RejectTween($"Material '{material.name}' does not contain Color property '{property}'.");
+                        Log.InvalidTween($"Material '{material.name}' does not contain Color property '{property}'.");
                         return Element.Value<Color>.Empty;
                   }
 
@@ -144,7 +144,7 @@ namespace Emp37.Tweening
             {
                   if (!material.HasProperty(property))
                   {
-                        Log.RejectTween($"Material '{material.name}' does not contain Vector property '{property}'.");
+                        Log.InvalidTween($"Material '{material.name}' does not contain Vector property '{property}'.");
                         return Element.Value<Vector4>.Empty;
                   }
 
@@ -180,7 +180,7 @@ namespace Emp37.Tweening
                   }
                   else
                   {
-                        Log.RejectTween($"Cannot tween non-orthographic camera '{camera.name}'.");
+                        Log.InvalidTween($"Cannot tween non-orthographic camera '{camera.name}'.");
                         return Element.Value<float>.Empty;
                   }
             }

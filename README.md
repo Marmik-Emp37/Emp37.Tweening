@@ -1,127 +1,220 @@
-# Version: 1.0.0
-A high-performance, composable tweening API for Unity that emphasizes clean architecture and developer experience.
+## About
+A modern, high-performance, zero-allocation tweening library for Unity that emphasizes clean architecture, developer experience, and runtime efficiency.
+Build animations from simple, composable building blocks and combine them into sophisticated flows.
+
+**Version: 2.0.0**
 
 ## Features
-- Works with domain and scene reloading both turned off.
-- Minimal per-frame overhead with optimized update loops.
-- Generic Value<T> system supports any struct type.
-- Built-in support for Unity primitives (Vector3, Color, Quaternion, etc.).
-- Build complex animations with Sequence and Parallel.
-- Extensive extension methods for common Unity components.
-- IntelliSense-friendly with comprehensive XML documentation.
-
++ Zero GC during updates - uses allocation-free data structures to avoid runtime garbage collection.
++ Type-safe tweening - supports tweening of any struct type with custom evaluator.
++ Fluent API - chain calls to build complex tweens concisely.
++ Composable animations - allows combining tween elements into sequences or parallel groups.
++ Extensive extensions - includes methods for common Unity components.
++ Tag-based control - start, pause, or stop groups of tweens using tags.
++ Lazy execution - tweens don't consume resources until played.
++ IntelliSense-friendly - includes comprehensive XML documentation.
++ Enter Play Mode Settings compatibility - functions as intended with any option.
+  
 ## Installation
-Clone or download this repository into your Unity project. No external dependencies required, works with Unity 2021.3 LTS and newer.
+Clone or download this repository and copy the `Emp37.Tweening` folder into your Unity project.
 
-## Usage
-> [!IMPORTANT]
-> All tweens are **lazy**, they won’t start until you call `.Play()` or `Factory.Play(IElement)`.
+**Requirements:** Unity 2021.3 LTS or newer.
+
+## Quick Start
 ```csharp
 using Emp37.Tweening;
 
-// run a tween without chaining Play()
-IElement tween = rectTransform.TweenMoveY(200F, 1F);
-Factory.Play(tween);
-```
-> [!Note]
-> Everything that tweens in this API is an `IElement` that can be played, paused or killed.
-### Extensions
-```csharp
-// fade a UI element
-canvasGroup.TweenFade(target: 0F, duration: 1.5F).Play();
+// simple fade-out animation
+canvasGroup.TweenFade(0F, 1.5F).Play();
 
-// move transform with custom easing
-transform.TweenMove(Vector3.zero, 3F).SetEase(Ease.Type.OutBounce).OnComplete(() => print("Finished")).Play();
-```
-### Value\<T>
-```csharp
-// built-in types work automatically
-Tween.Value(init: () => Time.timeScale, target: 2F, duration: 5F, update: value => Time.timeScale = value).Play();
+// move with easing and callback
+transform.TweenMoveY(5F, 2F).SetEase(Ease.Type.OutBounce).OnComplete(() => Debug.Log("Relocation complete!")).Play();
 
-// custom types need an evaluator function
-Tween.Value<MyStruct>(() => current, targetStruct, 2F, value => currentStruct = value, evaluator: (a, b, t) => MyStruct.Lerp(a, b, t)).Play();
+// scale with a spring animation curve and play the tween with a tag
+transform.TweenScale(Vector3.one * 2F, 1F).SetEase(Ease.Curves.Spring).PlayWithTag("UI");
 ```
-### Sequence
-A sequence allows playing tweens sequentially. There are three different syntax to build them:
-- Params Syntax
+
+## Core Concepts
+### Lazy Execution
+> [!IMPORTANT]
+> All tweens are **lazy** - they're configured but don't start until explicitly played.
+
 ```csharp
-// alarm sequence: camera shakes, lights turn red, audio fades out
-Tween.Sequence(mainCamera.TweenRotate(new Vector3(0F, 15F, 0F), 0.3F).SetEase(Ease.Type.InOutSine), sirenLight.TweenColor(Color.red, 0.5F), alarmSource.TweenVolume(0F, 1F)).Play();
+// configure tween
+var tween = transform.TweenScale(Vector3.one * 2F, 1F).SetEase(Ease.Type.OutElastic).SetTimeMode(Delta.Unscaled);
+
+// start it when needed using
+tween.Play(); // option 1: play directly on the tween instance
+tween.PlayWithTag("TagName"); // option 2: play and associate with a tag for group control
+Factory.Play(tween); // option 3: play through the Factory
+
+// or chain .Play() for immediate execution
+transform.TweenMove(target, 2F).Play();
 ```
-- Append Syntax
+
+### Element Types
+> [!NOTE]
+> Every animation is built on the `IElement` interface, which defines the lifecycle shared by all tween types.
+
+```
+IElement
+├── Value<T> // concrete tweening
+├── Sequence // sequential composition
+├── Parallel // concurrent composition
+├── Delay    // timing control
+└── Invoke   // callback execution
+```
+---------------
+#### Value\<T> → tween any struct between two values over time
 ```csharp
-// victory screen: fade in background, bounce trophy icon, then fill progress bar, fade in victory text
+// built-in primitive types already have optimized evaluators included in the library, no need to provide one
+var intensityTween = Tween.Value(link: spotlight, init: () => spotlight.intensity, target: 2F, duration: 0.5F, update: value => spotlight.intensity = value);
+
+// for custom struct types, you must supply an evaluator function that defines how to interpolate between two values of your type.
+Tween.Value<CustomStruct>(unityObject, () => current, target, 2F, value => current = value, evaluator: (a, b, t) => CustomStruct.Lerp(a, b, t));
+```
+`Value<T>` tweens can be repeated using the `Loop` struct. Configure the loop **mode**, **cycle count**, and optional **interval** between each cycle.
+```csharp
+// restart 3 extra times (total 4 plays)
+intensityTween.SetLoop(new Loop(mode: Loop.Type.Restart, count: 3));
+
+// set count to -1 for infinite loop
+intensityTween.SetLoop(new Loop(Loop.Type.Yoyo, -1));
+
+// loop with a delay between cycles
+intensityTween.SetLoop(new Loop(Loop.Type.Restart, 5, interval: 2F));
+```
+---------------
+#### Sequence → chain multiple elements to execute sequentially</br>
+There are 3 approaches to create a sequence:
+```csharp
+// 1. constructor syntax
+// onboarding tooltip: fade in panel, slide text, then play sound
+Tween.Sequence(tooltipBackground.TweenFade(1F, 0.3F), tooltipText.TweenMoveY(tooltipText.transform.localPosition.y + 50F, 0.4F).SetEase(Ease.Type.OutCubic), Tween.Invoke(() => audioSource.PlayOneShot(popupClip))).Play();
+
+// 2. fluent building syntax
+// level complete flow: fade in overlay, bounce star icons one by one, then show continue button
 Tween.Sequence()
-    .Append(victoryBackground.TweenFade(1F, 0.5F))
-    .Append(trophyIcon.TweenScale(Vector3.one * 1.2F, 0.7F).SetEase(Ease.Type.OutBack))
-    .Append(progressBar.TweenFill(1F, 2F))
-    .Append(victoryText.TweenAlpha(1F, 0.5F))
+    .Append(overlay.TweenFade(1F, 0.4F))
+    .Append(stars.ShowUp)
+    .Append(continueButton.TweenFade(1F, 0.5F))
+    .Play();
+
+// 3. then-chaining syntax
+// barrel explosion sequence: wait, flash red, explode
+Tween.Delay(0.5F).Then(transform.TweenColor(Color.red, 0.2F)).Then(Tween.Invoke(barrel.Explode)).Play();
+```
+---------------
+#### Parallel → run multiple elements simultaneously
+```csharp
+// UI reveal: fade in panel, slide title, and play sound all at once
+Tween.Parallel(panel.TweenFade(1F, 0.3F), title.TweenScale(Vector3.one, 0.4F).SetEase(Ease.Type.OutCubic), Tween.Invoke(() => audioSource.PlayOneShot(revealClip))).Play();
+```
+---------------
+#### Delay → wait for time or a condition
+```csharp
+// time-based delay
+Tween.Delay(3F);
+
+// condition-based delay
+Tween.Delay(() => Input.anyKeyDown);
+
+// combined: wait 1s AND for player jump
+Tween.Delay(1F, () => Input.GetKeyDown(KeyCode.Space));
+
+// practical example: tutorial prompt
+Tween.Sequence()
+    .Append(tutorialPanel.TweenFade(1F, 0.175F))
+    .Append(Tween.Delay(2F).Then(Tween.Invoke(() => promptText.text = "Press any key to continue..."))) //  nested sequence - show for 2s and update propmpt
+    .Append(Tween.Delay(() => Input.anyKeyDown)) // wait for input
+    .Append(tutorialPanel.TweenFade(0F, 0.4F).SetEase(Ease.Curves.Snappy)) // fade-out
     .Play();
 ```
-- Then Syntax
+---------------
+#### Invoke → execute an action inside a tween flow
 ```csharp
-// player damage feedback: flash red, knock back, restore
-playerSprite.TweenColor(Color.red, 0.2F).Then(playerTransform.TweenMoveX(playerTransform.position.x - 1.5F, 0.3F).SetEase(Ease.Type.OutQuad)).Then(playerSprite.TweenColor(originalColor, 0.2F)).Play();
+Tween.Sequence(explosive.TweenScale(Vector3.zero, 0.3F)).Append(Tween.Invoke(() => { Instantiate(explosionPrefab, explosive.position, Quaternion.identity); Destroy(explosive.gameObject); })).Play();
 ```
-### Parallel
-Parallels run multiple tweens at the same time under one `IElement`.
+### Easing & Animation
+Use from built-in presets, expressive curve types, or provide your own AnimationCurve.
 ```csharp
-var intensityTween = Tween.Value(() => spotlight.intensity, 5F, 1F, value => spotlight.intensity = value).SetDelay(0.2F);
+// built-in easing Types
+Linear, Sine, Cubic, Quint, Circ, Elastic, Quad, Quart, Expo, Back, Bounce
 
-// boss entrance: camera zooms in, music fades down, spotlight brightens simultaneously
-Tween.Parallel(mainCamera.TweenFOV(30F, 1.5F), bossTheme.TweenVolume(0.3F, 1.5F), intensityTween).Play();
-```
-### Delay
-```csharp
-// timed delay: wait 1.5 seconds before fading UI out
-Tween.Sequence(notificationPanel.TweenFade(1F, 0.5F), Tween.Delay(1.5F), notificationPanel.TweenFade(0F, 0.5F)).Play();
+// curve presets
+Anticipate, Pop, Punch, Shake, Snappy, Spring
 
-// conditional delay: wait until player presses any key before contuining the sequence
-Tween.Sequence()
-    .Append(introText.TweenAlpha(1F, 0.8F))
-    .Append(Tween.Delay(() => Input.anyKeyDown))
-    .Append(Tween.Parallel(introText.TweenAlpha(0F, 0.5F), mainMenu.TweenFade(1F, 1F)))
-    .Play();
+// custom curves
+tween.SetEase(customAnimationCurve);
 ```
-### Invoke
-```csharp
-// fade out music then trigger a level load
-musicSource.TweenVolume(0F, 1.5F).Then(Tween.Invoke(() => SceneManager.LoadScene("NextLevel"))).Play();
-```
----
-### Looping
-```csharp
-// infinite ping-pong with delay between cycles
-tween.SetLoop(new Loop(type: Loop.Type.Yoyo, count: -1, interval: 0.5F));
+Each easing type also supports directional variants:
++ **In** → starts slowly, speeds up.
++ **Out** → starts quickly, slows down.
++ **InOut** → combines both (ease-in then ease-out).
 
-// repeat 3 times
-tween.SetLoop(new Loop(Loop.Type.Repeat, 3));
-
-// one-shot return to start (common for UI effects)
-tween.SetReturnOnce();
-```
-### Lifecycle Events and Control
+## Lifecycle Control
+### Individual Tween
 ```csharp
-var tween = transform.TweenMove(target, 2f).OnStart(() => Debug.Log("Moving!")).OnUpdate(progress => UpdateProgressBar(progress)).OnComplete(() => TriggerParticles()).Play();
+var tween = transform.TweenScale(Vector3.one * 2F, 1F);
 
-tween.Pause();
-tween.Resume();
-tween.Kill();          // immediate stop
-tween.TerminateLoop(); // stop looping, finish current cycle
+// control execution
+tween.Play();          // start the tween
+tween.Pause();         // pause it in place
+tween.Resume();        // continue from where it paused
+tween.Kill();          // stop immediately and mark as None
+tween.TerminateLoop(); // if looping, stop after the current cycle
 ```
-### Memory Management & Linking
+
+### Global
+Use the `Factory` to affect all active tweens across the game.
 ```csharp
-// tween automatically dies if link is destroyed
-var tween = Tween.Value(() => enemy.health, target: 0F, duration: 1F, update: v => enemy.health = v, link: enemy.gameObject);
+Factory.Pause();   // pause every tween
+Factory.Resume();  // resume all paused tweens
+Factory.Kill();    // kill all tweens instantly
 
-// Capacity management
-Factory.MaxTweens = 256; // increase pool size if needed
+// group tweens with a tag and manage them collectively
+// this is useful for pausing UI animations during gameplay, or killing all enemy tweens on death
+
+// play with a tag
+transform.TweenMove(Vector3.one * 5F, 2F).PlayWithTag("UI");
+
+// later, control by tag
+Factory.Pause("UI");
+Factory.Resume("Player");
+Factory.Kill("Enemy");
 ```
-## Design Philosophy
-- **Lazy Execution**: Tweens are configured but don't consume resources until `.Play()` is called.
-- **Composition**: Complex animations are built by combining simple elements rather than creating monolithic tween classes.
-- **Fail-Safe**: Invalid parameters return empty tweens rather than throwing exceptions, preventing runtime crashes.
-- **Fluency**: Method chaining enables expressive, readable animation code.
+
+### Configuration
+```csharp
+// increase pool size for many concurrent tweens
+Factory.MaxTweens = 512;  // default: 64
+
+// monitor usage
+if (Factory.ActiveTweens > Factory.MaxTweens * 0.8F)
+{
+    Debug.LogWarning("Tween pool nearly exhausted!");
+}
+```
+
+## Troubleshooting
+### Nothing happens
+- Ensure you're calling `.Play()` or `.PlayWithTag()`.
+- Check if the linked object is active.
+- Verify `Factory.MaxTweens` hasn't been exceeded.
+
+### Unexpected behavior
+- Tweens capture initial values when `.Play()` is called, not when created.
+- Avoid starting multiple tweens on the same property at the same time.
+- Use tags to group and control tweens (pause old ones before starting new ones).
+
+### Logging & Debugging
+The tween system includes a lightweight logging utility.
+```csharp
+Log.Info("Message");
+Log.Warning("Warning");
+Log.Exception(exception);
+```
+Logs are enabled by default. To disable all tween logs globally use `Log.Enabled = false;`.
 
 ## License
-[MIT License](LICENSE)
+MIT License - see [LICENSE](LICENSE) for details.
