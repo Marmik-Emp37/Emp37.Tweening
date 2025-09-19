@@ -107,13 +107,19 @@ namespace Emp37.Tweening
 
                   if (!renderer.sharedMaterial.HasProperty(property))
                   {
-                        Log.InvalidTween ($"Renderer '{renderer.name}' does not contain float property '{property}'.");
+                        Log.InvalidTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
                         return Element.Value<Vector4>.Empty;
                   }
 
                   int id = Shader.PropertyToID(property);
                   return Value(renderer, () => block.GetVector(id), target, duration, value => { block.SetVector(id, value); renderer.SetPropertyBlock(block); });
             }
+
+
+            // L I G H T
+            public static Value<Color> TweenIntensity(this Light light, Color target, float duration) => Value(light, () => light.color, target, duration, value => light.color = value);
+            public static Value<float> TweenRange(this Light light, float target, float duration) => Value(light, () => light.range, target, duration, value => light.range = value);
+            public static Value<float> TweenColor(this Light light, float target, float duration) => Value(light, () => light.intensity, target, duration, value => light.intensity = value);
 
 
             // M A T E R I A L
