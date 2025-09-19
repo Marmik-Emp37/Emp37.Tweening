@@ -39,7 +39,14 @@ namespace Emp37.Tweening.Element
                         if (current.Phase is Phase.Active) current.Update();
                         if (current.Phase is not Phase.Complete and not Phase.None) continue;
 
-                        FastRemoveElement(i);
+                        if (elements.Count > SwapStrategyThreshold)
+                        {
+                              int last = elements.Count - 1;
+                              elements[i] = elements[last];
+                              i = last;
+                        }
+                        elements.RemoveAt(i);
+
                         if (elements.Count == 0) Phase = Phase.Complete;
                   }
             }
@@ -63,17 +70,6 @@ namespace Emp37.Tweening.Element
                   foreach (var element in elements) element.Kill();
                   elements.Clear();
                   Phase = Phase.None;
-            }
-
-            private void FastRemoveElement(int index)
-            {
-                  if (elements.Count > SwapStrategyThreshold)
-                  {
-                        int last = elements.Count - 1;
-                        elements[index] = elements[last];
-                        index = last;
-                  }
-                  elements.RemoveAt(index);
             }
       }
 }

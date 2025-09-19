@@ -168,9 +168,9 @@ tween.TerminateLoop(); // if looping, stop after the current cycle
 ### Global
 Use the `Factory` to affect all active tweens across the game.
 ```csharp
-Factory.Pause();   // pause every tween
-Factory.Resume();  // resume all paused tweens
-Factory.Kill();    // kill all tweens instantly
+Factory.Pause();  // pause every tween
+Factory.Resume(); // resume all paused tweens
+Factory.Kill();   // kill all tweens instantly
 
 // group tweens with a tag and manage them collectively
 // this is useful for pausing UI animations during gameplay, or killing all enemy tweens on death
@@ -187,7 +187,7 @@ Factory.Kill("Enemy");
 ### Configuration
 ```csharp
 // increase pool size for many concurrent tweens
-Factory.MaxTweens = 512;  // default: 64
+Factory.MaxTweens = 512; // default: 64
 
 // monitor usage
 if (Factory.ActiveTweens > Factory.MaxTweens * 0.8F)

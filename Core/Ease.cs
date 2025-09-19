@@ -150,8 +150,8 @@ namespace Emp37.Tweening
             public static float InQuart(float t) => t * t * t * t;
             public static float OutQuart(float t)
             {
-                  t -= 1F;
-                  return t * t * t * t + 1F;
+                  t = 1F - t;
+                  return 1F - t * t * t * t;
             }
             public static float InOutQuart(float t) => t < 0.5F ? (8F * t * t * t * t) : 1F - (Pow((-2F * t) + 2F, 4F) * 0.5F);
             public static float InExpo(float t) => t == 0F ? 0F : Pow(2F, 10F * (t - 1F));

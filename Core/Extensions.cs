@@ -107,13 +107,20 @@ namespace Emp37.Tweening
 
                   if (!renderer.sharedMaterial.HasProperty(property))
                   {
-                        Log.InvalidTween ($"Renderer '{renderer.name}' does not contain float property '{property}'.");
+                        Log.InvalidTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
                         return Element.Value<Vector4>.Empty;
                   }
 
                   int id = Shader.PropertyToID(property);
                   return Value(renderer, () => block.GetVector(id), target, duration, value => { block.SetVector(id, value); renderer.SetPropertyBlock(block); });
             }
+
+
+            // L I G H T
+            public static Value<float> TweenIntensity(this Light light, float target, float duration) => Value(light, () => light.intensity, target, duration, value => light.intensity = value);
+            public static Value<float> TweenIntensityBY(this Light light, float offset, float duration) => Value(light, () => light.intensity, () => offset + light.intensity, duration, value => light.intensity = value);
+            public static Value<Color> TweenColor(this Light light, Color target, float duration) => Value(light, () => light.color, target, duration, value => light.color = value);
+            public static Value<float> TweenRange(this Light light, float target, float duration) => Value(light, () => light.range, target, duration, value => light.range = value);
 
 
             // M A T E R I A L
@@ -167,7 +174,9 @@ namespace Emp37.Tweening
             public static Value<float> TweenText(this Text text, string target, float duration) => Value(text, () => 0, target.Length, duration, value => { int count = Mathf.Clamp(Mathf.FloorToInt(value), 0, target.Length); text.text = target[..count]; });
             public static Value<float> TweenText(this TMP_Text text, string target, float duration) => Value(text, () => 0, target.Length, duration, value => { int count = Mathf.Clamp(Mathf.FloorToInt(value), 0, target.Length); text.text = target[..count]; });
             public static Value<float> TweenNumber(this Text text, float target, float duration, string format) => Value(text, () => float.TryParse(text.text, out float value) ? value : 0F, target, duration, value => text.text = value.ToString(format));
+            public static Value<float> TweenNumberBY(this Text text, float offset, float duration, string format) => Value(text, () => float.TryParse(text.text, out float value) ? value : 0F, () => offset + (float.TryParse(text.text, out float value) ? value : 0F), duration, value => text.text = value.ToString(format));
             public static Value<float> TweenNumber(this TMP_Text text, float target, float duration, string format) => Value(text, () => float.TryParse(text.text, out float value) ? value : 0F, target, duration, value => text.text = value.ToString(format));
+            public static Value<float> TweenNumberBY(this TMP_Text text, float offset, float duration, string format) => Value(text, () => float.TryParse(text.text, out float value) ? value : 0F, () => offset + (float.TryParse(text.text, out float value) ? value : 0F), duration, value => text.text = value.ToString(format));
 
 
             // C A M E R A

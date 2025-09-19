@@ -9,7 +9,7 @@ namespace Emp37.Tweening.Element
       using static Ease;
 
       /// <summary>
-      /// A tween element that interpolates between two values of type T over a specified duration. Supports easing, looping, delays and lifecycle callbacks.
+      /// A tween element that interpolates between two values of type T over a specified duration. Supports easing, looping, delays, and lifecycle callbacks.
       /// </summary>
       /// <typeparam name="T">The value type being interpolated (must be a struct)</typeparam>
       public partial class Value<T> : IElement where T : struct
@@ -26,6 +26,7 @@ namespace Emp37.Tweening.Element
 
             private Loop loop;
             private int loopCount;
+            private bool isReversing;
 
             private readonly Action initTween;
             private readonly Evaluator evaluate;
@@ -81,19 +82,20 @@ namespace Emp37.Tweening.Element
                   float deltaTime = (timeMode == Delta.Unscaled) ? Time.unscaledDeltaTime : Time.deltaTime;
                   progress = Mathf.Min(progress + deltaTime * inverseDuration, 1F);
 
-                  if (progress < 0F) return; // processing delay
+                  if (progress < 0F) return; // delay phase
 
-                  float eased = easingFunction(progress);
+                  float ratio = isReversing ? 1F - progress : progress;
+                  float eased = easingFunction(ratio);
                   T value = evaluate(a, b, eased);
                   updateTween(value);
                   Utils.SafeInvoke(onUpdate, eased);
 
-                  if (progress < 1F) return; // complete iteration
+                  if (progress < 1F) return;
 
                   if (loop.Mode != Loop.Type.None && loopCount != 0)
                   {
                         if (loopCount > 0) loopCount--; // decrement if finite
-                        if (loop.Mode is Loop.Type.Yoyo) (b, a) = (a, b);
+                        if (loop.Mode is Loop.Type.Yoyo) isReversing = !isReversing;
 
                         progress = loop.Delay > 0F ? -loop.Delay : 0F;
                         return;
@@ -101,6 +103,7 @@ namespace Emp37.Tweening.Element
 
                   Phase = Phase.Complete;
                   Utils.SafeInvoke(onComplete);
+                  isReversing = false;
             }
 
             public virtual void Pause()
