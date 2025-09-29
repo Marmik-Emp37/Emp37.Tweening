@@ -1,8 +1,8 @@
 using System;
 
-namespace Emp37.Tweening.Element
+namespace Emp37.Tweening
 {
-      public sealed class Invoke : IElement
+      public sealed class Invoke : ITween
       {
             private readonly Action action;
 
@@ -10,10 +10,17 @@ namespace Emp37.Tweening.Element
             public Phase Phase { get; private set; }
             public bool IsEmpty => action == null;
 
-            public Invoke(Action action) => this.action = action;
 
-            void IElement.Init() => Phase = Phase.Active;
-            void IElement.Update()
+            public Invoke(Action action)
+            {
+                  this.action = action;
+            }
+
+            void ITween.Init()
+            {
+                  Phase = Phase.Active;
+            }
+            void ITween.Update()
             {
                   Utils.SafeInvoke(action);
                   Phase = Phase.Complete;
@@ -27,8 +34,11 @@ namespace Emp37.Tweening.Element
             {
                   if (Phase == Phase.Paused) Phase = Phase.Active;
             }
-            public void Kill() => Phase = Phase.None;
+            public void Kill()
+            {
+                  Phase = Phase.None;
+            }
 
-            public override string ToString() => Utils.Info(this, $"Invoke({action?.Method?.Name ?? "null"})");
+            public override string ToString() => this.Summarize(action?.Method?.Name ?? "null");
       }
 }
