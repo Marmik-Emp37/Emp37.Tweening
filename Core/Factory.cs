@@ -1,22 +1,25 @@
-﻿using UnityEngine;
+using System;
+using System.Collections.Generic;
+
+using UnityEngine;
 
 namespace Emp37.Tweening
 {
-      /// <summary>
-      /// Singleton factory that manages the lifecycle of all active tweens. Automatically created at runtime and persists across scene loads.
-      /// </summary>
-      /// <remarks>
-      /// Uses Unity's LateUpdate to tick all active tweens, ensuring animations run after all other game logic has been processed each frame.
-      /// <br>It aslo automatically enables/disables itself based on active tween count to minimize performance overhead when no tweens are running.</br>
-      /// </remarks>
-      [AddComponentMenu(""), DisallowMultipleComponent]
-      public sealed partial class Factory : MonoBehaviour
+      [DefaultExecutionOrder(1), AddComponentMenu(""), DisallowMultipleComponent]
+      public sealed class Factory : MonoBehaviour
       {
             private static Factory instance = null!;
 
-            private Factory() { }
+            private static readonly List<ITween> tweens = new(128);
 
-            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+            public static int ActiveTweens => tweens.Count;
+
+
+            private Factory()
+            {
+            }
+
+            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
             private static void Initialize()
             {
                   if (instance != null)
@@ -29,16 +32,104 @@ namespace Emp37.Tweening
 
             private void Awake()
             {
-                  enabled = false; // only enable when tweens are active
+                  enabled = false;
                   DontDestroyOnLoad(this);
+            }
+            private void LateUpdate()
+            {
+                  for (int i = tweens.Count - 1; i >= 0; i--) // backwards iteration doesn't skip elements on swap-removal
+                  {
+                        ITween tween = tweens[i];
+
+                        if (tween.Phase is Phase.Active) tween.Update();
+                        if (tween.Phase is not (Phase.Complete or Phase.None)) continue;
+
+                        int last = tweens.Count - 1;
+                        if (i != last) tweens[i] = tweens[last];
+                        tweens.RemoveAt(last);
+
+                        if (tweens.Count == 0)
+                        {
+                              enabled = false;
+                              break;
+                        }
+                  }
             }
             private void OnDestroy()
             {
                   if (instance != this) return;
-                  OnFactoryDestroy();
+
+                  tweens.Clear();
                   instance = null;
             }
 
-            static partial void OnFactoryDestroy();
+            public static void Play(ITween tween)
+            {
+                  if (instance == null)
+                  {
+                        Log.Error($"Cannot play tween: {nameof(Factory)} not initialized or destroyed.");
+                        return;
+                  }
+                  if (tween == null || tween.IsEmpty) return;
+                  if (tweens.Count == tweens.Capacity)
+                  {
+                        Log.Warning($"[{typeof(Factory).FullName}] Tween capacity ({tweens.Capacity}) reached. Factory is scaling up, check for leaks or unintended bursts.");
+                  }
+                  tweens.Add(tween);
+                  tween.Init();
+
+                  instance.enabled = true;
+            }
+
+            public static void Pause(string tag = null)
+            {
+                  if (string.IsNullOrWhiteSpace(tag))
+                  {
+                        for (int i = 0; i < tweens.Count; i++) tweens[i].Pause();
+                  }
+                  else
+                  {
+                        for (int i = 0; i < tweens.Count; i++)
+                        {
+                              ITween e = tweens[i];
+                              if (string.Equals(e.Tag, tag, StringComparison.Ordinal)) e.Pause();
+                        }
+                  }
+            }
+            public static void Resume(string tag = null)
+            {
+                  if (string.IsNullOrWhiteSpace(tag))
+                  {
+                        for (int i = 0; i < tweens.Count; i++) tweens[i].Resume();
+                  }
+                  else
+                  {
+                        for (int i = 0; i < tweens.Count; i++)
+                        {
+                              ITween e = tweens[i];
+                              if (string.Equals(e.Tag, tag, StringComparison.Ordinal)) e.Resume();
+                        }
+                  }
+            }
+            public static void Kill(string tag = null)
+            {
+                  if (string.IsNullOrWhiteSpace(tag))
+                  {
+                        for (int i = 0; i < tweens.Count; i++)
+                        {
+                              tweens[i].Kill();
+                        }
+                        tweens.Clear();
+                        instance.enabled = false;
+                  }
+                  else
+                  {
+                        for (int i = 0; i < tweens.Count; i++)
+                        {
+                              ITween e = tweens[i];
+                              if (string.Equals(e.Tag, tag, StringComparison.Ordinal)) e.Kill();
+                        }
+                  }
+            }
       }
 }

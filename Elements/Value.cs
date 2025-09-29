@@ -1,109 +1,165 @@
-using System;
+ï»¿using System;
+using System.Collections.Generic;
 
 using UnityEngine;
+using UnityEngine.Pool;
 
 using UObject = UnityEngine.Object;
 
-namespace Emp37.Tweening.Element
+namespace Emp37.Tweening
 {
       using static Ease;
 
-      /// <summary>
-      /// A tween element that interpolates between two values of type T over a specified duration. Supports easing, looping, delays, and lifecycle callbacks.
-      /// </summary>
-      /// <typeparam name="T">The value type being interpolated (must be a struct)</typeparam>
-      public partial class Value<T> : IElement where T : struct
+      public class Value<T> : ITween
       {
-            /// <summary>
-            /// Function that returns the interpolated value between start and target.
-            /// </summary>
+            internal static readonly Value<T> Empty = new Blank();
+            private sealed class Blank : Value<T>
+            {
+                  public override Value<T> disableLoop() => this;
+                  public override Value<T> setRecyclable(bool _) => this;
+                  public override Value<T> setDelay(float _) => this;
+                  public override Value<T> setEase(Type _) => this;
+                  public override Value<T> setEase(AnimationCurve _) => this;
+                  public override Value<T> setEase(Function _) => this;
+                  public override Value<T> setLoop(int _, LoopType __, float ___) => this;
+                  public override Value<T> setLoopInfinite(LoopType _, float __) => this;
+                  public override Value<T> setProgress(float _) => this;
+                  public override Value<T> setTarget(T _) => this;
+                  public override Value<T> setTimeMode(Delta _) => this;
+                  public override Value<T> onStart(Action _) => this;
+                  public override Value<T> onUpdate(Action<float> _) => this;
+                  public override Value<T> onComplete(Action _) => this;
+                  public override Value<T> onKill(Action _) => this;
+                  public override Value<T> onConclude(Action _) => this;
+
+                  public override void Pause() { }
+                  public override void Resume() { }
+                  public override void Kill() { }
+
+                  public override string ToString() => $"{nameof(Value<T>)}<{typeof(T).Name}>.{nameof(Blank)}";
+            }
+
+
             public delegate T Evaluator(T a, T b, float ratio);
+
+            private static readonly ObjectPool<Value<T>> pool = new(() => new Value<T>(), actionOnGet: v => v.OnGet(), actionOnRelease: v => v.OnRelease(), collectionCheck: true, defaultCapacity: 64);
+            private bool isRecyclable;
 
             private T a, b;
             private Delta timeMode;
-            private float progress;
-            private readonly float inverseDuration;
+            private float inverseDuration;
+            private float progress, delay;
+            private bool bootstrapped;
 
-            private Loop loop;
-            private int loopCount;
-            private bool isReversing;
+            private Action initTween;
+            private Action<T> easeTween;
+            private Function easingMethod;
+            private Evaluator evaluate;
 
-            private readonly Action initTween;
-            private readonly Evaluator evaluate;
-            private Function easingFunction;
-            private readonly Action<T> updateTween;
+            private UObject linkedTarget; // used to auto-kill tween if this object is destroyed
 
-            private readonly UObject linkedTarget; // auto-kill tween if this object is destroyed
+            private LoopType loopType;
+            private int remainingLoops;
+            private float loopInterval;
+            private sbyte direction;
 
-            private Action onStart;
-            private Action<float> onUpdate;
-            private Action onComplete;
+            private Action actionOnStart, actionOnComplete, actionOnKill, actionOnConclude;
+            private Action<float> actionOnUpdate;
+
+            private static readonly IReadOnlyDictionary<Type, Function> easeTypeMap = new Dictionary<Type, Function>
+            {
+                  { Type.Linear, Linear },
+                  { Type.InSine, InSine },
+                  { Type.OutSine, OutSine },
+                  { Type.InOutSine, InOutSine },
+                  { Type.InCubic, InCubic },
+                  { Type.OutCubic, OutCubic },
+                  { Type.InOutCubic, InOutCubic },
+                  { Type.InQuint, InQuint },
+                  { Type.OutQuint, OutQuint },
+                  { Type.InOutQuint, InOutQuint },
+                  { Type.InCirc, InCirc },
+                  { Type.OutCirc, OutCirc },
+                  { Type.InOutCirc, InOutCirc },
+                  { Type.InQuad, InQuad },
+                  { Type.OutQuad, OutQuad },
+                  { Type.InOutQuad, InOutQuad },
+                  { Type.InQuart, InQuart },
+                  { Type.OutQuart, OutQuart },
+                  { Type.InOutQuart, InOutQuart },
+                  { Type.InExpo, InExpo },
+                  { Type.OutExpo, OutExpo },
+                  { Type.InOutExpo, InOutExpo },
+                  { Type.InBack, InBack },
+                  { Type.OutBack, OutBack },
+                  { Type.InOutBack, InOutBack },
+                  { Type.InElastic, InElastic },
+                  { Type.OutElastic, OutElastic },
+                  { Type.InOutElastic, InOutElastic },
+                  { Type.InBounce, InBounce },
+                  { Type.OutBounce, OutBounce },
+                  { Type.InOutBounce, InOutBounce }
+            };
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
-            public bool IsDestroyed => linkedTarget == null;
+            public bool IsEmpty => ReferenceEquals(this, Empty) || IsDestroyed;
+
+            private bool IsDestroyed => linkedTarget == null;
 
 
-            private Value(UObject link, float duration, Action<T> update, Evaluator evaluator)
+            void ITween.Init()
             {
-                  linkedTarget = link;
-                  inverseDuration = 1F / duration;
-                  updateTween = update;
-                  evaluate = evaluator;
-
-                  easingFunction = Linear;
+                  if (!IsDestroyed) Phase = Phase.Active;
             }
-            internal Value(UObject link, Func<T> capture, T target, float duration, Action<T> update, Evaluator evaluator) : this(link, duration, update, evaluator)
+            void ITween.Update()
             {
-                  initTween = () => a = capture();
-                  b = target;
-            }
-            internal Value(UObject link, Func<T> capture, Func<T> dynamicTarget, float duration, Action<T> update, Evaluator evaluator) : this(link, duration, update, evaluator)
-            {
-                  initTween = () =>
+                  if (IsDestroyed)
                   {
-                        a = capture();
-                        b = dynamicTarget();
-                  };
-            }
-
-            void IElement.Init()
-            {
-                  if (IsDestroyed) return;
-
-                  initTween();
-                  Utils.SafeInvoke(onStart);
-                  Phase = Phase.Active;
-            }
-            void IElement.Update()
-            {
-                  if (IsDestroyed) { Kill(); return; }
+                        Kill();
+                        return;
+                  }
 
                   float deltaTime = (timeMode == Delta.Unscaled) ? Time.unscaledDeltaTime : Time.deltaTime;
+
+                  if (delay > 0F)
+                  {
+                        if ((delay -= deltaTime) > 0F) return;
+                        deltaTime = -delay; // carry over excess time
+                        delay = 0F;
+                  }
+
+                  if (!bootstrapped)
+                  {
+                        bootstrapped = true;
+                        try { initTween(); } catch (Exception ex) { HandleException(ex); return; }
+                        Utils.SafeInvoke(actionOnStart);
+                  }
+
                   progress = Mathf.Min(progress + deltaTime * inverseDuration, 1F);
+                  float ratio = direction > 0 ? progress : 1F - progress;
+                  float easedRatio = easingMethod(ratio);
+                  T value = evaluate(a, b, easedRatio);
+                  try { easeTween(value); } catch (Exception ex) { HandleException(ex); return; }
 
-                  if (progress < 0F) return; // delay phase
-
-                  float ratio = isReversing ? 1F - progress : progress;
-                  float eased = easingFunction(ratio);
-                  T value = evaluate(a, b, eased);
-                  updateTween(value);
-                  Utils.SafeInvoke(onUpdate, eased);
+                  Utils.SafeInvoke(actionOnUpdate, easedRatio);
 
                   if (progress < 1F) return;
 
-                  if (loop.Mode != Loop.Type.None && loopCount != 0)
+                  if (loopType != LoopType.None && remainingLoops != 0)
                   {
-                        if (loopCount > 0) loopCount--; // decrement if finite
-                        if (loop.Mode is Loop.Type.Yoyo) isReversing = !isReversing;
+                        if (remainingLoops > 0) remainingLoops--; // decrement if finite
+                        if (loopType is LoopType.Yoyo) direction *= -1;
 
-                        progress = loop.Delay > 0F ? -loop.Delay : 0F;
+                        progress = 0F;
+                        delay = loopInterval;
                         return;
                   }
 
                   Phase = Phase.Complete;
-                  Utils.SafeInvoke(onComplete);
-                  isReversing = false;
+                  Utils.SafeInvoke(actionOnComplete);
+
+                  Conclude();
             }
 
             public virtual void Pause()
@@ -116,46 +172,122 @@ namespace Emp37.Tweening.Element
             }
             public virtual void Kill()
             {
+                  if (Phase is Phase.None or Phase.Complete) return;
+
                   Phase = Phase.None;
+                  Utils.SafeInvoke(actionOnKill);
+
+                  Conclude();
             }
-            /// <summary>
-            /// Stops looping and allows the current cycle to complete naturally.
-            /// </summary>
-            public virtual void TerminateLoop() => SetLoop(Loop.Default);
+
+            private void Conclude()
+            {
+                  Utils.SafeInvoke(actionOnConclude);
+                  if (isRecyclable)
+                  {
+                        pool.Release(this);
+                  }
+            }
+            private void HandleException(Exception ex)
+            {
+                  Log.Exception(ex);
+                  Kill();
+            }
+
 
             #region F L U E N T   A P I
-            public virtual Value<T> SetTag(string tag) { Tag = tag; return this; }
-            /// <summary>
-            /// Sets a new target value for this tween. The current progress will interpolate toward this new target.
-            /// </summary>
-            public virtual Value<T> SetTarget(T value) { b = value; return this; }
-            /// <summary>
-            /// Sets the easing function using a predefined easing type.
-            /// </summary>
-            public virtual Value<T> SetEase(Type type) { easingFunction = TypeMap[type]; return this; }
-            /// <summary>
-            /// Sets a custom easing function using an <see cref="AnimationCurve"/>.
-            /// </summary>
-            /// <param name="curve">The curve that maps normalized progress (0–1) to interpolation output. Values may extend outside the [0,1] range depending on the curve.</param>
-            public virtual Value<T> SetEase(AnimationCurve curve) { easingFunction = curve.Evaluate; return this; }
-            /// <summary>
-            /// Configures this tween to repeat according to a specified loop strategy.
-            /// </summary>
-            public virtual Value<T> SetLoop(in Loop config) { loop = config; loopCount = config.Cycles; return this; }
-            /// <summary>
-            /// Configures this tween to automatically play forward, then reverse once using Yoyo loop.
-            /// </summary>
-            /// <param name="delay">In seconds.</param>
-            public virtual Value<T> SetReturnOnce(float delay = 0F) => SetLoop(new(Loop.Type.Yoyo, 1, delay));
-            public virtual Value<T> SetTimeMode(Delta type) { timeMode = type; return this; }
-            public virtual Value<T> OnStart(Action action) { onStart = action; return this; }
-            /// <param name="action">
-            /// The callback that receives the eased progress value (0 - 1) each frame.
-            /// </param>
-            public virtual Value<T> OnUpdate(Action<float> action) { onUpdate = action; return this; }
-            public virtual Value<T> OnComplete(Action action) { onComplete = action; return this; }
+#pragma warning disable IDE1006 // Naming Styles
+            public virtual Value<T> disableLoop() { loopType = LoopType.None; remainingLoops = 0; return this; }
+            public virtual Value<T> setRecyclable(bool value) { isRecyclable = value; return this; }
+            public virtual Value<T> setDelay(float seconds) { delay = seconds; return this; }
+            public virtual Value<T> setEase(Type type) { if (!IsDestroyed) easingMethod = easeTypeMap[type]; return this; }
+            public virtual Value<T> setEase(Function function) { if (!IsDestroyed) easingMethod = function; return this; }
+            public virtual Value<T> setEase(AnimationCurve curve) { if (!IsDestroyed) easingMethod = curve.Evaluate; return this; }
+            public virtual Value<T> setLoop(int cycles, LoopType type, float delay = 0F) { remainingLoops = (cycles <= 0) ? -1 : cycles; loopType = type; loopInterval = Mathf.Max(0F, delay); return this; }
+            public virtual Value<T> setLoopInfinite(LoopType type, float delay = 0F) => setLoop(-1, type, delay);
+            public virtual Value<T> setProgress(float normalizedValue) { progress = Mathf.Clamp01(normalizedValue); return this; }
+            public virtual Value<T> setTarget(T value) { b = value; return this; }
+            public virtual Value<T> setTimeMode(Delta mode) { timeMode = mode; return this; }
+
+            public virtual Value<T> onStart(Action action) { if (!IsDestroyed) actionOnStart = action; return this; }
+            public virtual Value<T> onUpdate(Action<float> action) { if (!IsDestroyed) actionOnUpdate = action; return this; }
+            public virtual Value<T> onComplete(Action action) { if (!IsDestroyed) actionOnComplete = action; return this; }
+            public virtual Value<T> onKill(Action action) { if (!IsDestroyed) actionOnKill = action; return this; }
+            public virtual Value<T> onConclude(Action action) { if (!IsDestroyed) actionOnConclude = action; return this; }
+#pragma warning restore IDE1006
             #endregion
 
-            public override string ToString() => Utils.Info(this, $"Progress: {progress:P0}", $"A: {a} - B: {b}]", $"Duration: {inverseDuration / 1F}", $"Mode: {timeMode}");
+            #region P O O L   A C T I O N S
+            private void OnGet()
+            {
+                  isRecyclable = true;
+                  a = b = default;
+                  timeMode = Delta.Scaled;
+                  inverseDuration = 0F;
+                  progress = 0F;
+                  delay = 0F;
+                  bootstrapped = false;
+                  easingMethod = Linear;
+                  evaluate = null;
+                  loopType = LoopType.None;
+                  remainingLoops = 0;
+                  loopInterval = 0F;
+                  direction = 1;
+                  Tag = null;
+            }
+            private void OnRelease()
+            {
+                  initTween = null;
+                  easeTween = null;
+                  easingMethod = null;
+                  actionOnStart = null;
+                  actionOnComplete = null;
+                  actionOnKill = null;
+                  actionOnConclude = null;
+                  actionOnUpdate = null;
+                  linkedTarget = null;
+                  Phase = Phase.None;
+            }
+            #endregion
+
+            private static bool Validate(UObject link, object initialization, object target, float duration, object update, object evaluator)
+            {
+                  bool ok = true;
+                  if (link == null) { Log.RejectTween($"No valid ({nameof(link)}) provided."); ok = false; }
+                  if (initialization == null) { Log.RejectTween($"Missing ({nameof(initialization)}) delegate to capture the start value."); ok = false; }
+                  if (target == null) { Log.RejectTween($"Missing ({nameof(target)}) value or getter."); ok = false; }
+                  if (duration <= 0F) { Log.RejectTween($"Duration must be greater than 0 (received  {duration})."); ok = false; }
+                  if (update == null) { Log.RejectTween($"Missing ({nameof(update)}) callback to apply tweened values."); ok = false; }
+                  if (evaluator == null) { Log.RejectTween($"Missing ({nameof(evaluator)}) function to compute interpolated values."); ok = false; }
+                  return ok;
+            }
+            private void Setup(UObject link, float duration, Action<T> onEase, Evaluator evaluator)
+            {
+                  linkedTarget = link;
+                  inverseDuration = 1F / duration;
+                  easeTween = onEase;
+                  evaluate = evaluator;
+            }
+            private void Configure(Func<T> initialization, T target) => initTween = () => { a = initialization(); b = target; };
+            private void Configure(Func<T> initialization, Func<T> target) => initTween = () => { a = initialization(); b = target(); };
+
+            internal static Value<T> Fetch(UObject link, Func<T> initialization, T target, float duration, Action<T> update, Evaluator evaluator)
+            {
+                  if (!Validate(link, initialization, target, duration, update, evaluator)) return Empty;
+                  Value<T> value = pool.Get();
+                  value.Setup(link, duration, update, evaluator);
+                  value.Configure(initialization, target);
+                  return value;
+            }
+            internal static Value<T> Fetch(UObject link, Func<T> initialization, Func<T> target, float duration, Action<T> update, Evaluator evaluator)
+            {
+                  if (!Validate(link, initialization, target, duration, update, evaluator)) return Empty;
+                  Value<T> value = pool.Get();
+                  value.Setup(link, duration, update, evaluator);
+                  value.Configure(initialization, target);
+                  return value;
+            }
+
+            public override string ToString() => this.Summarize($"Target: {linkedTarget.name} | Delay: {delay:0.###}s | Progress: {progress:P0} | A: {a} - B: {b} | Duration: {1F / inverseDuration: 0.###}s | Ease: {easingMethod?.Method?.Name ?? "None"} | Mode: {timeMode}");
       }
 }
