@@ -5,8 +5,6 @@ using TMPro;
 
 namespace Emp37.Tweening
 {
-      using Element;
-
       using static Tween;
 
       public static class Extensions
@@ -80,7 +78,7 @@ namespace Emp37.Tweening
                   if (!renderer.sharedMaterial.HasProperty(property))
                   {
                         Log.InvalidTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
-                        return Element.Value<float>.Empty;
+                        return Value<float>.Empty;
                   }
 
                   int id = Shader.PropertyToID(property);
@@ -94,7 +92,7 @@ namespace Emp37.Tweening
                   if (!renderer.sharedMaterial.HasProperty(property))
                   {
                         Log.InvalidTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
-                        return Element.Value<Color>.Empty;
+                        return Value<Color>.Empty;
                   }
 
                   int id = Shader.PropertyToID(property);
@@ -108,7 +106,7 @@ namespace Emp37.Tweening
                   if (!renderer.sharedMaterial.HasProperty(property))
                   {
                         Log.InvalidTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
-                        return Element.Value<Vector4>.Empty;
+                        return Value<Vector4>.Empty;
                   }
 
                   int id = Shader.PropertyToID(property);
@@ -130,7 +128,7 @@ namespace Emp37.Tweening
                   if (!material.HasProperty(property))
                   {
                         Log.InvalidTween($"Material '{material.name}' does not contain float property '{property}'.");
-                        return Element.Value<float>.Empty;
+                        return Value<float>.Empty;
                   }
 
                   int id = Shader.PropertyToID(property);
@@ -141,7 +139,7 @@ namespace Emp37.Tweening
                   if (!material.HasProperty(property))
                   {
                         Log.InvalidTween($"Material '{material.name}' does not contain Color property '{property}'.");
-                        return Element.Value<Color>.Empty;
+                        return Value<Color>.Empty;
                   }
 
                   int id = Shader.PropertyToID(property);
@@ -152,7 +150,7 @@ namespace Emp37.Tweening
                   if (!material.HasProperty(property))
                   {
                         Log.InvalidTween($"Material '{material.name}' does not contain Vector property '{property}'.");
-                        return Element.Value<Vector4>.Empty;
+                        return Value<Vector4>.Empty;
                   }
 
                   int id = Shader.PropertyToID(property);
@@ -190,7 +188,7 @@ namespace Emp37.Tweening
                   else
                   {
                         Log.InvalidTween($"Cannot tween non-orthographic camera '{camera.name}'.");
-                        return Element.Value<float>.Empty;
+                        return Value<float>.Empty;
                   }
             }
 

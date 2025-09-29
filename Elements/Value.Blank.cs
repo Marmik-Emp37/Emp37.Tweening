@@ -2,7 +2,7 @@ using System;
 
 using UnityEngine;
 
-namespace Emp37.Tweening.Element
+namespace Emp37.Tweening
 {
       public partial class Value<T> where T : struct
       {

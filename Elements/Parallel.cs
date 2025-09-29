@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Emp37.Tweening.Element
+namespace Emp37.Tweening
 {
       public sealed class Parallel : IElement
       {

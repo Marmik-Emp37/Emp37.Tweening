@@ -6,5 +6,4 @@ namespace Emp37.Tweening
             Unscaled
       }
       public enum Phase { None, Active, Paused, Complete }
-      public enum UpdateMode { Normal, Fixed, Late }
 }

@@ -2,7 +2,7 @@ using System;
 
 using UnityEngine;
 
-namespace Emp37.Tweening.Element
+namespace Emp37.Tweening
 {
       public class Delay : IElement
       {
@@ -49,6 +49,6 @@ namespace Emp37.Tweening.Element
             }
             public void Kill() => Phase = Phase.None;
 
-            public override string ToString() => Utils.Info(this, $"Remaining: {remainingTime}", $"Predicate: {(predicate == null ? "null" : "set")}", $"Mode: {timeMode}");
+            public override string ToString() => Log.ElementInfo(this, $"Remaining: {remainingTime}", $"Predicate: {(predicate == null ? "null" : "set")}", $"Mode: {timeMode}");
       }
 }

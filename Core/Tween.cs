@@ -7,16 +7,14 @@ using UObject = UnityEngine.Object;
 
 namespace Emp37.Tweening
 {
-      using Element;
-
       /// <summary>
       /// Main entry point for creating and controlling tweens.
       /// </summary>
       public static class Tween
       {
             // E X T E N S I O N S
-            public static void Play(this IElement element) => Factory.Play(element);
-            public static void PlayWithTag(this IElement element, string tag) { element.Tag = tag; Factory.Play(element); }
+            public static T Play<T>(this T element) where T : IElement { Factory.Play(element); return element; }
+            public static T PlayWithTag<T>(this T element, string tag) where T : IElement { element.Tag = tag; return Play(element); }
             public static Sequence Then(this IElement current, IElement next) => Sequence(current, next);
 
             // E L E M E N T   M E T H O D S
@@ -31,8 +29,8 @@ namespace Emp37.Tweening
                   if (evaluator == null) { Log.InvalidTween($"Missing '{nameof(evaluator)}'. Delegate that defines how values are interpolated."); isValid = false; }
                   return isValid;
             }
-            public static Value<T> Value<T>(UObject link, Func<T> capture, T target, float duration, Action<T> update, Value<T>.Evaluator evaluator) where T : struct => ValidateArguments(link, capture, target, duration, update, evaluator) ? new Value<T>(link, capture, target, duration, update, evaluator) : Element.Value<T>.Empty;
-            public static Value<T> Value<T>(UObject link, Func<T> capture, Func<T> dynamicTarget, float duration, Action<T> update, Value<T>.Evaluator evaluator) where T : struct => ValidateArguments(link, capture, dynamicTarget, duration, update, evaluator) ? new Value<T>(link, capture, dynamicTarget, duration, update, evaluator) : Element.Value<T>.Empty;
+            public static Value<T> Value<T>(UObject link, Func<T> capture, T target, float duration, Action<T> update, Value<T>.Evaluator evaluator) where T : struct => ValidateArguments(link, capture, target, duration, update, evaluator) ? new Value<T>(link, capture, target, duration, update, evaluator) : Tweening.Value<T>.Empty;
+            public static Value<T> Value<T>(UObject link, Func<T> capture, Func<T> dynamicTarget, float duration, Action<T> update, Value<T>.Evaluator evaluator) where T : struct => ValidateArguments(link, capture, dynamicTarget, duration, update, evaluator) ? new Value<T>(link, capture, dynamicTarget, duration, update, evaluator) : Tweening.Value<T>.Empty;
             public static Value<float> Value(UObject link, Func<float> capture, float target, float duration, Action<float> update) => Value(link, capture, target, duration, update, Mathf.LerpUnclamped);
             public static Value<float> Value(UObject link, Func<float> capture, Func<float> dynamicTarget, float duration, Action<float> update) => Value(link, capture, dynamicTarget, duration, update, Mathf.LerpUnclamped);
             public static Value<Vector2> Value(UObject link, Func<Vector2> capture, Vector2 target, float duration, Action<Vector2> update) => Value(link, capture, target, duration, update, Vector2.LerpUnclamped);

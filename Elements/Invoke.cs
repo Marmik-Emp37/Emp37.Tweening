@@ -1,6 +1,6 @@
 using System;
 
-namespace Emp37.Tweening.Element
+namespace Emp37.Tweening
 {
       public sealed class Invoke : IElement
       {
@@ -29,6 +29,6 @@ namespace Emp37.Tweening.Element
             }
             public void Kill() => Phase = Phase.None;
 
-            public override string ToString() => Utils.Info(this, $"Invoke({action?.Method?.Name ?? "null"})");
+            public override string ToString() => Log.ElementInfo(this, action?.Method?.Name ?? "null");
       }
 }

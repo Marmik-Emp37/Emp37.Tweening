@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Emp37.Tweening.Element
+namespace Emp37.Tweening
 {
       public sealed class Sequence : IElement
       {
@@ -76,5 +76,7 @@ namespace Emp37.Tweening.Element
                   elements.Clear();
                   Phase = Phase.None;
             }
+
+            public override string ToString() => Log.ElementInfo(this, $"Current: <color=#80FF00>({(current != null ? current : "null")})</color>");
       }
 }

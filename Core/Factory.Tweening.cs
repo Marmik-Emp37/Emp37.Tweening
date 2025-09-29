@@ -48,10 +48,10 @@ namespace Emp37.Tweening
                   instance.enabled = true;
             }
             public static void Pause() => tweens.ForEach(element => element.Pause());
-            public static void Resume() => tweens.ForEach(element => element.Resume());
-            public static void Kill() => tweens.ForEach(element => element.Kill());
             public static void Pause(string tag) => tweens.ForEachTagged(tag, element => element.Pause());
+            public static void Resume() => tweens.ForEach(element => element.Resume());
             public static void Resume(string tag) => tweens.ForEachTagged(tag, element => element.Resume());
+            public static void Kill() => tweens.ForEach(element => element.Kill());
             public static void Kill(string tag) => tweens.ForEachTagged(tag, element => element.Kill());
 
             static partial void OnFactoryDestroy() => tweens.Clear();

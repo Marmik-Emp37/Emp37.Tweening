@@ -1,5 +1,3 @@
-using Emp37.Tweening.Element;
-
 namespace Emp37.Tweening
 {
       public interface IElement

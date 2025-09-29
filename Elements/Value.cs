@@ -4,7 +4,7 @@ using UnityEngine;
 
 using UObject = UnityEngine.Object;
 
-namespace Emp37.Tweening.Element
+namespace Emp37.Tweening
 {
       using static Ease;
 
@@ -85,10 +85,10 @@ namespace Emp37.Tweening.Element
                   if (progress < 0F) return; // delay phase
 
                   float ratio = isReversing ? 1F - progress : progress;
-                  float eased = easingFunction(ratio);
-                  T value = evaluate(a, b, eased);
+                  float easedRatio = easingFunction(ratio);
+                  T value = evaluate(a, b, easedRatio);
                   updateTween(value);
-                  Utils.SafeInvoke(onUpdate, eased);
+                  Utils.SafeInvoke(onUpdate, easedRatio);
 
                   if (progress < 1F) return;
 
@@ -101,9 +101,9 @@ namespace Emp37.Tweening.Element
                         return;
                   }
 
-                  Phase = Phase.Complete;
-                  Utils.SafeInvoke(onComplete);
                   isReversing = false;
+                  Utils.SafeInvoke(onComplete);
+                  Phase = Phase.Complete;
             }
 
             public virtual void Pause()
@@ -116,6 +116,7 @@ namespace Emp37.Tweening.Element
             }
             public virtual void Kill()
             {
+                  isReversing = false;
                   Phase = Phase.None;
             }
             /// <summary>
@@ -156,6 +157,6 @@ namespace Emp37.Tweening.Element
             public virtual Value<T> OnComplete(Action action) { onComplete = action; return this; }
             #endregion
 
-            public override string ToString() => Utils.Info(this, $"Progress: {progress:P0}", $"A: {a} - B: {b}]", $"Duration: {inverseDuration / 1F}", $"Mode: {timeMode}");
+            public override string ToString() => Log.ElementInfo(this, $"Progress: {progress:P0}", $"A: {a} - B: {b}]", $"Duration: {1F / inverseDuration}", $"Mode: {timeMode}");
       }
 }
