@@ -1,57 +1,55 @@
 using System.Collections.Generic;
 
-namespace Emp37.Tweening.Element
+namespace Emp37.Tweening
 {
-      public sealed class Sequence : IElement
+      public sealed class Sequence : ITween
       {
-            private readonly Queue<IElement> elements;
-            private IElement current;
+            private readonly Queue<ITween> tweens;
+            private ITween current;
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
-            public bool IsEmpty => current == null && elements.Count == 0;
+            public bool IsEmpty => current == null && tweens.Count == 0;
 
 
-            internal Sequence() => elements = new();
-            internal Sequence(IEnumerable<IElement> elements) : this() => Append(elements);
+            internal Sequence() => tweens = new();
+            internal Sequence(IEnumerable<ITween> tweens) : this() => Append(tweens);
 
-            public Sequence Append(IElement element)
+            public Sequence Append(ITween tween)
             {
-                  if (!element.IsEmpty)
-                  {
-                        if (current == null) current = element;
-                        else elements.Enqueue(element);
-                  }
+                  if (tween == null || tween.IsEmpty) return this;
+
+                  if (current == null) current = tween;
+                  else tweens.Enqueue(tween);
+
                   return this;
             }
-            public Sequence Append(IEnumerable<IElement> elements)
+            public Sequence Append(IEnumerable<ITween> tweens)
             {
-                  foreach (var element in elements)
-                  {
-                        Append(element);
-                  }
+                  if (tweens == null) return this;
+                  foreach (ITween item in tweens) Append(item);
                   return this;
             }
-            public Sequence Append(params IElement[] elements) => Append((IEnumerable<IElement>) elements);
+            public Sequence Append(params ITween[] tweens) => Append((IEnumerable<ITween>) tweens);
 
-            void IElement.Init()
+            void ITween.Init()
             {
                   current.Init();
                   Phase = Phase.Active;
             }
-            void IElement.Update()
+            void ITween.Update()
             {
                   if (current.Phase is Phase.Active) current.Update();
                   if (current.Phase is not Phase.Complete and not Phase.None) return;
 
-                  if (elements.Count == 0)
+                  if (tweens.Count == 0)
                   {
                         current = null;
                         Phase = Phase.Complete;
                   }
                   else
                   {
-                        current = elements.Dequeue();
+                        current = tweens.Dequeue();
                         current.Init();
                   }
             }
@@ -59,22 +57,23 @@ namespace Emp37.Tweening.Element
             public void Pause()
             {
                   if (Phase != Phase.Active) return;
-
                   current?.Pause();
                   Phase = Phase.Paused;
             }
             public void Resume()
             {
                   if (Phase != Phase.Paused) return;
-
                   current?.Resume();
                   Phase = Phase.Active;
             }
             public void Kill()
             {
-                  current?.Kill(); current = null;
-                  elements.Clear();
+                  current?.Kill();
+                  current = null;
+                  tweens.Clear();
                   Phase = Phase.None;
             }
+
+            public override string ToString() => this.Summarize($"Current: <color=#80FF00>{(current != null ? current.ToString() : "null")}</color> | Pending: {tweens.Count}");
       }
 }

@@ -5,8 +5,6 @@ using TMPro;
 
 namespace Emp37.Tweening
 {
-      using Element;
-
       using static Tween;
 
       public static class Extensions
@@ -79,8 +77,8 @@ namespace Emp37.Tweening
 
                   if (!renderer.sharedMaterial.HasProperty(property))
                   {
-                        Log.InvalidTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
-                        return Element.Value<float>.Empty;
+                        Log.RejectTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
+                        return Value<float>.Empty;
                   }
 
                   int id = Shader.PropertyToID(property);
@@ -93,8 +91,8 @@ namespace Emp37.Tweening
 
                   if (!renderer.sharedMaterial.HasProperty(property))
                   {
-                        Log.InvalidTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
-                        return Element.Value<Color>.Empty;
+                        Log.RejectTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
+                        return Value<Color>.Empty;
                   }
 
                   int id = Shader.PropertyToID(property);
@@ -107,8 +105,8 @@ namespace Emp37.Tweening
 
                   if (!renderer.sharedMaterial.HasProperty(property))
                   {
-                        Log.InvalidTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
-                        return Element.Value<Vector4>.Empty;
+                        Log.RejectTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
+                        return Value<Vector4>.Empty;
                   }
 
                   int id = Shader.PropertyToID(property);
@@ -129,8 +127,8 @@ namespace Emp37.Tweening
             {
                   if (!material.HasProperty(property))
                   {
-                        Log.InvalidTween($"Material '{material.name}' does not contain float property '{property}'.");
-                        return Element.Value<float>.Empty;
+                        Log.RejectTween($"Material '{material.name}' does not contain float property '{property}'.");
+                        return Value<float>.Empty;
                   }
 
                   int id = Shader.PropertyToID(property);
@@ -140,8 +138,8 @@ namespace Emp37.Tweening
             {
                   if (!material.HasProperty(property))
                   {
-                        Log.InvalidTween($"Material '{material.name}' does not contain Color property '{property}'.");
-                        return Element.Value<Color>.Empty;
+                        Log.RejectTween($"Material '{material.name}' does not contain Color property '{property}'.");
+                        return Value<Color>.Empty;
                   }
 
                   int id = Shader.PropertyToID(property);
@@ -151,8 +149,8 @@ namespace Emp37.Tweening
             {
                   if (!material.HasProperty(property))
                   {
-                        Log.InvalidTween($"Material '{material.name}' does not contain Vector property '{property}'.");
-                        return Element.Value<Vector4>.Empty;
+                        Log.RejectTween($"Material '{material.name}' does not contain Vector property '{property}'.");
+                        return Value<Vector4>.Empty;
                   }
 
                   int id = Shader.PropertyToID(property);
@@ -171,8 +169,8 @@ namespace Emp37.Tweening
             public static Value<float> TweenAlpha(this Graphic graphic, float target, float duration) => Value(graphic, () => graphic.color.a, target, duration, value => { var color = graphic.color; color.a = value; graphic.color = color; });
             public static Value<Color> TweenColor(this Graphic graphic, Color target, float duration) => Value(graphic, () => graphic.color, target, duration, value => graphic.color = value);
             public static Value<float> TweenFill(this Image image, float target, float duration) => Value(image, () => image.fillAmount, target, duration, value => image.fillAmount = value);
-            public static Value<float> TweenText(this Text text, string target, float duration) => Value(text, () => 0, target.Length, duration, value => { int count = Mathf.Clamp(Mathf.FloorToInt(value), 0, target.Length); text.text = target[..count]; });
-            public static Value<float> TweenText(this TMP_Text text, string target, float duration) => Value(text, () => 0, target.Length, duration, value => { int count = Mathf.Clamp(Mathf.FloorToInt(value), 0, target.Length); text.text = target[..count]; });
+            public static Value<float> TweenText(this Text text, string target, float duration) => Value(text, () => 0, target?.Length ?? 0, duration, value => { int count = Mathf.Clamp(Mathf.FloorToInt(value), 0, target.Length); text.text = count == 0 ? string.Empty : target[..count]; });
+            public static Value<float> TweenText(this TMP_Text text, string target, float duration) => Value(text, () => 0, target?.Length ?? 0, duration, value => { int count = Mathf.Clamp(Mathf.FloorToInt(value), 0, target.Length); text.text = count == 0 ? string.Empty : target[..count]; });
             public static Value<float> TweenNumber(this Text text, float target, float duration, string format) => Value(text, () => float.TryParse(text.text, out float value) ? value : 0F, target, duration, value => text.text = value.ToString(format));
             public static Value<float> TweenNumberBY(this Text text, float offset, float duration, string format) => Value(text, () => float.TryParse(text.text, out float value) ? value : 0F, () => offset + (float.TryParse(text.text, out float value) ? value : 0F), duration, value => text.text = value.ToString(format));
             public static Value<float> TweenNumber(this TMP_Text text, float target, float duration, string format) => Value(text, () => float.TryParse(text.text, out float value) ? value : 0F, target, duration, value => text.text = value.ToString(format));
@@ -189,8 +187,8 @@ namespace Emp37.Tweening
                   }
                   else
                   {
-                        Log.InvalidTween($"Cannot tween non-orthographic camera '{camera.name}'.");
-                        return Element.Value<float>.Empty;
+                        Log.RejectTween($"Cannot tween non-orthographic camera '{camera.name}'.");
+                        return Value<float>.Empty;
                   }
             }
 

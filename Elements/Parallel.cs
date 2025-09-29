@@ -1,75 +1,85 @@
 using System.Collections.Generic;
 
-namespace Emp37.Tweening.Element
+namespace Emp37.Tweening
 {
-      public sealed class Parallel : IElement
+      public sealed class Parallel : ITween
       {
-            const int SwapStrategyThreshold = 15;
-
-            private readonly List<IElement> elements;
+            private readonly List<ITween> tweens;
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
-            public bool IsEmpty => elements.Count == 0;
+            public bool IsEmpty => tweens.Count == 0;
 
 
-            internal Parallel(IEnumerable<IElement> elements)
+            internal Parallel(IEnumerable<ITween> tweens)
             {
-                  this.elements = new();
-                  foreach (var element in elements)
-                  {
-                        if (!element.IsEmpty)
-                        {
-                              this.elements.Add(element);
-                        }
-                  }
+                  this.tweens = new();
+                  foreach (ITween tween in tweens)
+                        if (tween != null && !tween.IsEmpty) this.tweens.Add(tween);
             }
 
-            void IElement.Init()
+            void ITween.Init()
             {
-                  foreach (var element in elements) element.Init();
+                  for (int i = 0, count = tweens.Count; i < count; i++)
+                  {
+                        tweens[i].Init();
+                  }
                   Phase = Phase.Active;
             }
-            void IElement.Update()
+            void ITween.Update()
             {
-                  for (int i = elements.Count - 1; i >= 0; i--)
+                  for (int i = tweens.Count - 1; i >= 0; i--)
                   {
-                        IElement current = elements[i];
+                        ITween current = tweens[i];
 
                         if (current.Phase is Phase.Active) current.Update();
                         if (current.Phase is not Phase.Complete and not Phase.None) continue;
 
-                        if (elements.Count > SwapStrategyThreshold)
-                        {
-                              int last = elements.Count - 1;
-                              elements[i] = elements[last];
-                              i = last;
-                        }
-                        elements.RemoveAt(i);
+                        int last = tweens.Count - 1;
+                        if (i != last) tweens[i] = tweens[last];
+                        tweens.RemoveAt(last);
 
-                        if (elements.Count == 0) Phase = Phase.Complete;
+                        if (tweens.Count == 0) Phase = Phase.Complete;
                   }
             }
 
             public void Pause()
             {
                   if (Phase != Phase.Active) return;
-
-                  foreach (var element in elements) element.Pause();
+                  for (int i = 0, count = tweens.Count; i < count; i++)
+                  {
+                        tweens[i].Pause();
+                  }
                   Phase = Phase.Paused;
             }
             public void Resume()
             {
                   if (Phase != Phase.Paused) return;
-
-                  foreach (var element in elements) element.Resume();
+                  for (int i = 0, count = tweens.Count; i < count; i++)
+                  {
+                        tweens[i].Resume();
+                  }
                   Phase = Phase.Active;
             }
             public void Kill()
             {
-                  foreach (var element in elements) element.Kill();
-                  elements.Clear();
+                  for (int i = 0, count = tweens.Count; i < count; i++)
+                  {
+                        tweens[i].Kill();
+                  }
+                  tweens.Clear();
                   Phase = Phase.None;
+            }
+
+            public override string ToString()
+            {
+                  int total = tweens.Count;
+                  int active = 0, paused = 0, finished = 0;
+
+                  foreach (ITween tween in tweens)
+                        switch (tween.Phase) { case Phase.Active: active++; break; case Phase.Paused: paused++; break; default: finished++; break; }
+
+                  return this.Summarize($"Children: {total} (Active: {active}, Paused: {paused}, Finished: {finished})");
             }
       }
 }
