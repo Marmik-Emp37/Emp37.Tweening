@@ -78,9 +78,11 @@ namespace Emp37.Tweening
                   { Type.InOutBounce, InOutBounce }
             };
 
-            #region P E N N E R ' S   E A S I N G   N O T A T I O N S
+
             public delegate float Function(float t);
 
+
+            // penner's Easing Notations
             public const float S = 1.70158F; // default overshoot for Back easing
             public const float C2 = S * 1.525F; // adjusted overshoot for smoother InOutBack transition
             public const float C3 = S + 1F; // amplified overshoot used in InBack and OutBack
@@ -88,7 +90,6 @@ namespace Emp37.Tweening
             public const float C5 = 2F * PI / 4.5F; // angular frequency for InOutElastic (higher value creates faster oscillation)
             public const float N1 = 7.5625F; // bounce scaling factor (controls bounce height and shape)
             public const float D1 = 2.75F; // bounce phase division (segments the bounce into time intervals for OutBounce).
-            #endregion
 
             public static float Linear(float t) => t;
             public static float InSine(float t) => 1F - Cos(t * PI * 0.5F);
@@ -192,6 +193,7 @@ namespace Emp37.Tweening
                   return N1 * (t -= 2.625F / D1) * t + 0.984375F;
             }
             public static float InOutBounce(float t) => t < 0.5F ? (1F - OutBounce(1F - 2F * t)) * 0.5F : (1F + OutBounce(2F * t - 1F)) * 0.5F;
+
 
             public static class Curves
             {
