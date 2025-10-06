@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Emp37.Tweening
 {
-      public class Delay : IElement
+      public class Delay : ITween
       {
             private float remainingTime;
             private readonly float originalTime;
@@ -20,12 +20,12 @@ namespace Emp37.Tweening
             internal Delay(Func<bool> until) => predicate = until;
             internal Delay(float duration, Func<bool> until, Delta mode) { originalTime = duration; timeMode = mode; predicate = until; }
 
-            void IElement.Init()
+            void ITween.Init()
             {
                   remainingTime = originalTime;
                   Phase = Phase.Active;
             }
-            void IElement.Update()
+            void ITween.Update()
             {
                   if (remainingTime > 0F)
                   {
@@ -47,8 +47,11 @@ namespace Emp37.Tweening
             {
                   if (Phase == Phase.Paused) Phase = Phase.Active;
             }
-            public void Kill() => Phase = Phase.None;
+            public void Kill()
+            {
+                  Phase = Phase.None;
+            }
 
-            public override string ToString() => Log.Summarize(this, $"Remaining: {remainingTime}", $"Predicate: {(predicate == null ? "null" : "set")}", $"Mode: {timeMode}");
+            public override string ToString() => this.Summarize($"Elapsed: {originalTime - remainingTime}/{originalTime} | Predicate: {(predicate == null ? "null" : predicate.Method.Name)} | Mode: {timeMode}");
       }
 }

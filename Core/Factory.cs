@@ -4,27 +4,28 @@ using UnityEngine;
 
 namespace Emp37.Tweening
 {
-      [AddComponentMenu(""), DisallowMultipleComponent]
+      [DefaultExecutionOrder(1), AddComponentMenu(""), DisallowMultipleComponent]
       public sealed class Factory : MonoBehaviour
       {
             private static Factory instance = null!;
 
-            private static IElement[] elements = new IElement[64];
+            private static ITween[] tweens;
             private static int count;
 
             public static int ActiveTweens => count;
             public static int MaxTweens
             {
-                  get => elements.Length;
+                  get => tweens.Length;
                   set
                   {
-                        if (value == elements.Length) return;
-                        int limit = Mathf.Max(value, count);
+                        if (value == tweens.Length) return;
+
+                        int limit = Mathf.Max(count, value);
                         if (limit == count)
                         {
-                              Log.Warning($"Requested capacity {value} is below active count ({count}). Using {limit}.");
+                              Log.Warning($"[{typeof(Factory).FullName}] Cannot shrink tween capacity to {value} as {count} tweens are currently active. Keeping capacity at {limit}.");
                         }
-                        Array.Resize(ref elements, limit);
+                        Array.Resize(ref tweens, limit);
                   }
             }
 
@@ -42,6 +43,7 @@ namespace Emp37.Tweening
 
             private Factory()
             {
+                  tweens = new ITween[64];
             }
 
             private void Awake()
@@ -53,14 +55,14 @@ namespace Emp37.Tweening
             {
                   for (int i = count - 1; i >= 0; i--) // iterate backwards so swap-removal doesn't skip elements
                   {
-                        IElement element = elements[i];
+                        ITween tween = tweens[i];
 
-                        if (element.Phase is Phase.Active) element.Update();
-                        if (element.Phase is not (Phase.Complete or Phase.None)) continue;
+                        if (tween.Phase is Phase.Active) tween.Update();
+                        if (tween.Phase is not (Phase.Complete or Phase.None)) continue;
 
                         int last = --count;
-                        elements[i] = elements[last];
-                        elements[last] = null;
+                        tweens[i] = tweens[last];
+                        tweens[last] = null;
 
                         if (count == 0) enabled = false;
                   }
@@ -69,23 +71,21 @@ namespace Emp37.Tweening
             {
                   if (instance != this) return;
 
-                  Array.Clear(elements, 0, count); // bulk-null active range
-                  count = 0;
-
+                  Clear();
                   instance = null;
             }
 
-            public static void Play(IElement element)
+            public static void Play(ITween tween)
             {
-                  if (!Application.isPlaying || element.IsEmpty) return;
+                  if (!Application.isPlaying || tween.IsEmpty) return;
                   if (count == MaxTweens)
                   {
-                        Log.Warning($"{typeof(Factory).FullName}: Active tween limit ({MaxTweens}) reached. Increase {nameof(MaxTweens)} to allow more tweens.");
+                        Log.Warning($"[{typeof(Factory).FullName}] Active tween limit ({MaxTweens}) reached. Increase '{nameof(MaxTweens)}' to allow more tweens.");
                         return;
                   }
 
-                  elements[count++] = element;
-                  element.Init();
+                  tweens[count++] = tween;
+                  tween.Init();
 
                   instance.enabled = true;
             }
@@ -94,13 +94,13 @@ namespace Emp37.Tweening
             {
                   if (string.IsNullOrWhiteSpace(tag))
                   {
-                        for (int i = 0; i < count; i++) elements[i].Pause();
+                        for (int i = 0; i < count; i++) tweens[i].Pause();
                   }
                   else
                   {
                         for (int i = 0; i < count; i++)
                         {
-                              IElement e = elements[i];
+                              ITween e = tweens[i];
                               if (e.Tag != null && e.Tag.Equals(tag, StringComparison.Ordinal)) e.Pause();
                         }
                   }
@@ -109,13 +109,13 @@ namespace Emp37.Tweening
             {
                   if (string.IsNullOrWhiteSpace(tag))
                   {
-                        for (int i = 0; i < count; i++) elements[i].Resume();
+                        for (int i = 0; i < count; i++) tweens[i].Resume();
                   }
                   else
                   {
                         for (int i = 0; i < count; i++)
                         {
-                              IElement e = elements[i];
+                              ITween e = tweens[i];
                               if (e.Tag != null && e.Tag.Equals(tag, StringComparison.Ordinal)) e.Resume();
                         }
                   }
@@ -124,16 +124,26 @@ namespace Emp37.Tweening
             {
                   if (string.IsNullOrWhiteSpace(tag))
                   {
-                        for (int i = 0; i < count; i++) elements[i].Kill();
+                        for (int i = 0; i < count; i++)
+                        {
+                              tweens[i].Kill();
+                        }
+                        Clear();
                   }
                   else
                   {
                         for (int i = 0; i < count; i++)
                         {
-                              IElement e = elements[i];
+                              ITween e = tweens[i];
                               if (e.Tag != null && e.Tag.Equals(tag, StringComparison.Ordinal)) e.Kill();
                         }
                   }
+            }
+
+            private static void Clear()
+            {
+                  Array.Clear(tweens, 0, count);
+                  count = 0;
             }
       }
 }

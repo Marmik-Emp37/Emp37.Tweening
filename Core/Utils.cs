@@ -1,7 +1,5 @@
 using System;
 
-using UnityEngine;
-
 namespace Emp37.Tweening
 {
       internal static class Utils
@@ -26,18 +24,6 @@ namespace Emp37.Tweening
                   catch (Exception ex)
                   {
                         Log.Exception(ex);
-                  }
-            }
-            internal static T SafeInvoke<T>(Func<T> callback)
-            {
-                  try
-                  {
-                        return callback();
-                  }
-                  catch (Exception ex)
-                  {
-                        Log.Exception(ex);
-                        return default;
                   }
             }
       }

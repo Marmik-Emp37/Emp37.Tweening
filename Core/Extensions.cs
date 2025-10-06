@@ -10,6 +10,14 @@ namespace Emp37.Tweening
       public static class Extensions
       {
             // P O S I T I O N
+            public static Value<float> TweenMoveX2(this Transform transform, float target, float duration)
+            {
+                  void update(float value) { var pos = transform.position; pos.x = value; transform.position = pos; }
+                  float capture() => transform.position.x;
+
+                  return Value(transform, capture, target, duration, update);
+            }
+
             public static Value<Vector3> TweenMove(this Transform transform, Vector3 target, float duration) => Value(transform, () => transform.position, target, duration, value => transform.position = value);
             public static Value<Vector3> TweenMoveBY(this Transform transform, Vector3 offset, float duration) => Value(transform, () => transform.position, () => offset + transform.position, duration, value => transform.position = value);
             public static Value<Vector2> TweenMove(this Transform transform, Vector2 target, float duration) => Value(transform, () => (Vector2) transform.position, target, duration, value => transform.position = value);
