@@ -10,9 +10,13 @@ namespace Emp37.Tweening
             public Phase Phase { get; private set; }
             public bool IsEmpty => action == null;
 
+
             public Invoke(Action action) => this.action = action;
 
-            void IElement.Init() => Phase = Phase.Active;
+            void IElement.Init()
+            {
+                  Phase = Phase.Active;
+            }
             void IElement.Update()
             {
                   Utils.SafeInvoke(action);
@@ -29,6 +33,6 @@ namespace Emp37.Tweening
             }
             public void Kill() => Phase = Phase.None;
 
-            public override string ToString() => Log.ElementInfo(this, action?.Method?.Name ?? "null");
+            public override string ToString() => Log.Summarize(this, action?.Method?.Name ?? "null");
       }
 }

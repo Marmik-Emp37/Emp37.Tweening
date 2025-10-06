@@ -23,6 +23,7 @@ namespace Emp37.Tweening
             private Delta timeMode;
             private float progress;
             private readonly float inverseDuration;
+            private bool isBootstrapped;
 
             private Loop loop;
             private int loopCount;
@@ -35,9 +36,8 @@ namespace Emp37.Tweening
 
             private readonly UObject linkedTarget; // auto-kill tween if this object is destroyed
 
-            private Action onStart;
             private Action<float> onUpdate;
-            private Action onComplete;
+            private Action onStart, onComplete, onKill;
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
@@ -69,11 +69,7 @@ namespace Emp37.Tweening
 
             void IElement.Init()
             {
-                  if (IsDestroyed) return;
-
-                  initTween();
-                  Utils.SafeInvoke(onStart);
-                  Phase = Phase.Active;
+                  if (!IsDestroyed) Phase = Phase.Active;
             }
             void IElement.Update()
             {
@@ -83,6 +79,14 @@ namespace Emp37.Tweening
                   progress = Mathf.Min(progress + deltaTime * inverseDuration, 1F);
 
                   if (progress < 0F) return; // delay phase
+
+                  if (!isBootstrapped)
+                  {
+                        initTween();
+                        Utils.SafeInvoke(onStart);
+
+                        isBootstrapped = true;
+                  }
 
                   float ratio = isReversing ? 1F - progress : progress;
                   float easedRatio = easingFunction(ratio);
@@ -97,7 +101,7 @@ namespace Emp37.Tweening
                         if (loopCount > 0) loopCount--; // decrement if finite
                         if (loop.Mode is Loop.Type.Yoyo) isReversing = !isReversing;
 
-                        progress = loop.Delay > 0F ? -loop.Delay : 0F;
+                        progress = Mathf.Min(0F, -loop.Delay);
                         return;
                   }
 
@@ -117,14 +121,12 @@ namespace Emp37.Tweening
             public virtual void Kill()
             {
                   isReversing = false;
+                  Utils.SafeInvoke(onKill);
                   Phase = Phase.None;
             }
-            /// <summary>
-            /// Stops looping and allows the current cycle to complete naturally.
-            /// </summary>
-            public virtual void TerminateLoop() => SetLoop(Loop.Default);
 
             #region F L U E N T   A P I
+            public virtual Value<T> SetDelay(float seconds) { progress = Mathf.Min(0F, -seconds); return this; }
             public virtual Value<T> SetTag(string tag) { Tag = tag; return this; }
             /// <summary>
             /// Sets a new target value for this tween. The current progress will interpolate toward this new target.
@@ -142,12 +144,8 @@ namespace Emp37.Tweening
             /// <summary>
             /// Configures this tween to repeat according to a specified loop strategy.
             /// </summary>
-            public virtual Value<T> SetLoop(in Loop config) { loop = config; loopCount = config.Cycles; return this; }
-            /// <summary>
-            /// Configures this tween to automatically play forward, then reverse once using Yoyo loop.
-            /// </summary>
-            /// <param name="delay">In seconds.</param>
-            public virtual Value<T> SetReturnOnce(float delay = 0F) => SetLoop(new(Loop.Type.Yoyo, 1, delay));
+            public virtual Value<T> SetLoop(in Loop config) { loop = config; loopCount = loop.Cycles; return this; }
+            public virtual Value<T> SetLoop(Loop.Preset strategy) { loop = new(strategy); loopCount = loop.Cycles; return this; }
             public virtual Value<T> SetTimeMode(Delta type) { timeMode = type; return this; }
             public virtual Value<T> OnStart(Action action) { onStart = action; return this; }
             /// <param name="action">
@@ -155,8 +153,9 @@ namespace Emp37.Tweening
             /// </param>
             public virtual Value<T> OnUpdate(Action<float> action) { onUpdate = action; return this; }
             public virtual Value<T> OnComplete(Action action) { onComplete = action; return this; }
+            public virtual Value<T> OnKill(Action action) { onKill = action; return this; }
             #endregion
 
-            public override string ToString() => Log.ElementInfo(this, $"Progress: {progress:P0}", $"A: {a} - B: {b}]", $"Duration: {1F / inverseDuration}", $"Mode: {timeMode}");
+            public override string ToString() => Log.Summarize(this, $"Progress: {progress:P0}", $"A: {a} - B: {b}]", $"Duration: {1F / inverseDuration}", $"Mode: {timeMode}");
       }
 }

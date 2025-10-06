@@ -36,6 +36,8 @@ namespace Emp37.Tweening
 
             void IElement.Init()
             {
+                  if (current == null) return;
+
                   current.Init();
                   Phase = Phase.Active;
             }
@@ -77,6 +79,6 @@ namespace Emp37.Tweening
                   Phase = Phase.None;
             }
 
-            public override string ToString() => Log.ElementInfo(this, $"Current: <color=#80FF00>({(current != null ? current : "null")})</color>");
+            public override string ToString() => Log.Summarize(this, $"Current: <color=#80FF00>({(current != null ? current : "null")})</color>");
       }
 }

@@ -17,7 +17,7 @@ namespace Emp37.Tweening
 
 
             internal Delay(float duration, Delta mode) { originalTime = duration; timeMode = mode; }
-            internal Delay(Func<bool> until) : this(-1F, Delta.Scaled) => predicate = until;
+            internal Delay(Func<bool> until) => predicate = until;
             internal Delay(float duration, Func<bool> until, Delta mode) { originalTime = duration; timeMode = mode; predicate = until; }
 
             void IElement.Init()
@@ -49,6 +49,6 @@ namespace Emp37.Tweening
             }
             public void Kill() => Phase = Phase.None;
 
-            public override string ToString() => Log.ElementInfo(this, $"Remaining: {remainingTime}", $"Predicate: {(predicate == null ? "null" : "set")}", $"Mode: {timeMode}");
+            public override string ToString() => Log.Summarize(this, $"Remaining: {remainingTime}", $"Predicate: {(predicate == null ? "null" : "set")}", $"Mode: {timeMode}");
       }
 }

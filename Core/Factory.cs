@@ -5,11 +5,11 @@ using UnityEngine;
 namespace Emp37.Tweening
 {
       [AddComponentMenu(""), DisallowMultipleComponent]
-      public sealed partial class Factory : MonoBehaviour
+      public sealed class Factory : MonoBehaviour
       {
             private static Factory instance = null!;
 
-            private static IElement[] elements;
+            private static IElement[] elements = new IElement[64];
             private static int count;
 
             public static int ActiveTweens => count;
@@ -46,8 +46,6 @@ namespace Emp37.Tweening
 
             private void Awake()
             {
-                  elements = new IElement[64];
-
                   enabled = false;
                   DontDestroyOnLoad(this);
             }
