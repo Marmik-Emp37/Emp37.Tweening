@@ -8,7 +8,7 @@ namespace Emp37.Tweening
 {
       public class Value<T> : ITween
       {
-            public static Value<T> Empty = new Blank();
+            public static readonly Value<T> Empty = new Blank();
             private sealed class Blank : Value<T>
             {
                   public override Value<T> setDelay(float _) => this;
@@ -56,7 +56,7 @@ namespace Emp37.Tweening
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
-            public bool IsEmpty => ReferenceEquals(this, Empty);
+            public bool IsInvalid => ReferenceEquals(this, Empty);
             public bool IsDestroyed => linkedTarget == null;
 
 
@@ -71,16 +71,16 @@ namespace Emp37.Tweening
                   easeTween = ease;
                   this.evaluator = evaluator;
             }
-            internal Value(UObject link, Func<T> capture, T target, float duration, Action<T> update, Evaluator evaluator) : this(link, duration, update, evaluator)
+            internal Value(UObject link, Func<T> initialization, T target, float duration, Action<T> update, Evaluator evaluator) : this(link, duration, update, evaluator)
             {
-                  initTween = () => a = capture();
+                  initTween = () => a = initialization();
                   b = target;
             }
-            internal Value(UObject link, Func<T> capture, Func<T> dynamicTarget, float duration, Action<T> update, Evaluator evaluator) : this(link, duration, update, evaluator)
+            internal Value(UObject link, Func<T> initialization, Func<T> dynamicTarget, float duration, Action<T> update, Evaluator evaluator) : this(link, duration, update, evaluator)
             {
                   initTween = () =>
                   {
-                        a = capture();
+                        a = initialization();
                         b = dynamicTarget();
                   };
             }
@@ -171,6 +171,6 @@ namespace Emp37.Tweening
 #pragma warning restore IDE1006
             #endregion
 
-            public override string ToString() => this.Summarize($"Progress: {progress:P0} | A: {a} - B: {b} | Duration: {1F / inverseDuration} | Mode: {timeMode}");
+            public override string ToString() => this.Summarize($"Progress: {progress:P0} | A: {a} - B: {b} | Duration: {1F / inverseDuration: 0.###} | Mode: {timeMode}");
       }
 }

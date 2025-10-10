@@ -77,7 +77,7 @@ namespace Emp37.Tweening
 
             public static void Play(ITween tween)
             {
-                  if (!Application.isPlaying || tween.IsEmpty) return;
+                  if (!Application.isPlaying || tween == null || tween.IsInvalid) return;
                   if (count == MaxTweens)
                   {
                         Log.Warning($"[{typeof(Factory).FullName}] Active tween limit ({MaxTweens}) reached. Increase '{nameof(MaxTweens)}' to allow more tweens.");
@@ -101,7 +101,7 @@ namespace Emp37.Tweening
                         for (int i = 0; i < count; i++)
                         {
                               ITween e = tweens[i];
-                              if (e.Tag != null && e.Tag.Equals(tag, StringComparison.Ordinal)) e.Pause();
+                              if (string.Equals(e.Tag, tag, StringComparison.Ordinal)) e.Pause();
                         }
                   }
             }
@@ -116,7 +116,7 @@ namespace Emp37.Tweening
                         for (int i = 0; i < count; i++)
                         {
                               ITween e = tweens[i];
-                              if (e.Tag != null && e.Tag.Equals(tag, StringComparison.Ordinal)) e.Resume();
+                              if (string.Equals(e.Tag, tag, StringComparison.Ordinal)) e.Resume();
                         }
                   }
             }
@@ -135,7 +135,7 @@ namespace Emp37.Tweening
                         for (int i = 0; i < count; i++)
                         {
                               ITween e = tweens[i];
-                              if (e.Tag != null && e.Tag.Equals(tag, StringComparison.Ordinal)) e.Kill();
+                              if (string.Equals(e.Tag, tag, StringComparison.Ordinal)) e.Kill();
                         }
                   }
             }

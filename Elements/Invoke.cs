@@ -8,7 +8,7 @@ namespace Emp37.Tweening
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
-            public bool IsEmpty => action == null;
+            public bool IsInvalid => action == null;
 
 
             public Invoke(Action action)

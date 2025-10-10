@@ -9,7 +9,7 @@ namespace Emp37.Tweening
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
-            public bool IsEmpty => current == null && tweens.Count == 0;
+            public bool IsInvalid => current == null && tweens.Count == 0;
 
 
             internal Sequence() => tweens = new();
@@ -17,11 +17,11 @@ namespace Emp37.Tweening
 
             public Sequence Append(ITween tween)
             {
-                  if (!tween.IsEmpty)
-                  {
-                        if (current == null) current = tween;
-                        else tweens.Enqueue(tween);
-                  }
+                  if (tween == null || tween.IsInvalid) return this;
+
+                  if (current == null) current = tween;
+                  else tweens.Enqueue(tween);
+
                   return this;
             }
             public Sequence Append(IEnumerable<ITween> tweens)

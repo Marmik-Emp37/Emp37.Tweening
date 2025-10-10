@@ -13,7 +13,7 @@ namespace Emp37.Tweening
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
-            public bool IsEmpty => originalTime <= 0F && predicate == null;
+            public bool IsInvalid => originalTime < 0F && predicate == null;
 
 
             internal Delay(float duration, Delta mode) { originalTime = duration; timeMode = mode; }

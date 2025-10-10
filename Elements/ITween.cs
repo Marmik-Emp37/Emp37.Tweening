@@ -4,7 +4,7 @@ namespace Emp37.Tweening
       {
             public string Tag { get; set; }
             public Phase Phase { get; }
-            public bool IsEmpty { get; }
+            public bool IsInvalid { get; }
 
             internal void Init();
             internal void Update();

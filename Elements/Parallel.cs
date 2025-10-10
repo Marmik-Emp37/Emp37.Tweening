@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Emp37.Tweening
 {
@@ -9,14 +8,14 @@ namespace Emp37.Tweening
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
-            public bool IsEmpty => tweens.Count == 0;
+            public bool IsInvalid => tweens.Count == 0;
 
 
             internal Parallel(IEnumerable<ITween> tweens)
             {
                   this.tweens = new();
-                  foreach (ITween element in tweens)
-                        if (!element.IsEmpty) this.tweens.Add(element);
+                  foreach (ITween tween in tweens)
+                        if (tween != null && !tween.IsInvalid) this.tweens.Add(tween);
             }
 
             void ITween.Init()
