@@ -86,6 +86,7 @@ namespace Emp37.Tweening
                   if (count == MaxTweens)
                   {
                         Log.Warning($"[{typeof(Factory).FullName}] Active tween limit ({MaxTweens}) reached. Increase '{nameof(MaxTweens)}' to allow more tweens.");
+                        tween.Kill();
                         return;
                   }
 

@@ -174,9 +174,6 @@ namespace Emp37.Tweening
             }
             public virtual void Kill()
             {
-                  if (Phase is Phase.None or Phase.Complete) return;
-
-                  Phase = Phase.None;
                   Utils.SafeInvoke(actionOnKill);
 
                   Utils.SafeInvoke(actionOnConclude);
