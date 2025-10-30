@@ -160,8 +160,7 @@ namespace Emp37.Tweening
                   Phase = Phase.Complete;
                   Utils.SafeInvoke(actionOnComplete);
 
-                  Utils.SafeInvoke(actionOnConclude);
-                  Recycle();
+                  Conclude();
             }
 
             public virtual void Pause()
@@ -174,14 +173,15 @@ namespace Emp37.Tweening
             }
             public virtual void Kill()
             {
+                  Phase = Phase.None;
                   Utils.SafeInvoke(actionOnKill);
 
-                  Utils.SafeInvoke(actionOnConclude);
-                  Recycle();
+                  Conclude();
             }
 
-            private void Recycle()
+            private void Conclude()
             {
+                  Utils.SafeInvoke(actionOnConclude);
                   if (isRecyclable)
                   {
                         pool.Release(this);
