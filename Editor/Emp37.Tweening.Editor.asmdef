@@ -1,0 +1,18 @@
+{
+    "name": "Emp37.Tweening.Editor",
+    "rootNamespace": "Emp37.Tweening.Editor",
+    "references": [
+        "GUID:b26d2834770a2414c829277a1ea7284e"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
