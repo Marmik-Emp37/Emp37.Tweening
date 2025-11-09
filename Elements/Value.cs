@@ -288,6 +288,6 @@ namespace Emp37.Tweening
                   return value;
             }
 
-            public override string ToString() => this.Summarize($"Target: {linkedTarget.name} | Delay: {delay:0.###}s | Progress: {progress:P0} | A: {a} - B: {b} | Duration: {1F / inverseDuration: 0.###}s | Ease: {easingMethod?.Method?.Name ?? "None"} | Mode: {timeMode}");
+            public override string ToString() => this.Summarize($"Target: {(linkedTarget == null ? "Destroyed" : linkedTarget.name)} | Delay: {delay:0.###}s | Progress: {progress:P0} | A: {a} - B: {b} | Duration: {1F / inverseDuration: 0.###}s | Ease: {easingMethod?.Method?.Name ?? "None"} | Mode: {timeMode}");
       }
 }
