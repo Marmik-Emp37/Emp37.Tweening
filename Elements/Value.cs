@@ -22,7 +22,6 @@ namespace Emp37.Tweening
                   public override Value<T> setEase(AnimationCurve _) => this;
                   public override Value<T> setEase(Function _) => this;
                   public override Value<T> setLoop(int _, LoopType __, float ___) => this;
-                  public override Value<T> setLoopInfinite(LoopType _, float __) => this;
                   public override Value<T> setProgress(float _) => this;
                   public override Value<T> setTarget(T _) => this;
                   public override Value<T> setTimeMode(Delta _) => this;
@@ -204,7 +203,6 @@ namespace Emp37.Tweening
             public virtual Value<T> setEase(Function function) { if (!IsDestroyed) easingMethod = function; return this; }
             public virtual Value<T> setEase(AnimationCurve curve) { if (!IsDestroyed) easingMethod = curve.Evaluate; return this; }
             public virtual Value<T> setLoop(int cycles, LoopType type, float delay = 0F) { remainingLoops = (cycles <= 0) ? -1 : cycles; loopType = type; loopInterval = Mathf.Max(0F, delay); return this; }
-            public virtual Value<T> setLoopInfinite(LoopType type, float delay = 0F) => setLoop(-1, type, delay);
             public virtual Value<T> setProgress(float normalizedValue) { progress = Mathf.Clamp01(normalizedValue); return this; }
             public virtual Value<T> setTarget(T value) { b = value; return this; }
             public virtual Value<T> setTimeMode(Delta mode) { timeMode = mode; return this; }
