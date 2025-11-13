@@ -5,12 +5,22 @@ namespace Emp37.Tweening
       public sealed class Sequence : ITween
       {
             private readonly Queue<ITween> tweens;
+            private int total;
             private ITween current;
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => current == null && tweens.Count == 0;
+            public TweenInfo Info
+            {
+                  get
+                  {
+                        int pending = tweens.Count, completed = total - pending - 1;
+                        float currentRatio = current != null ? current.Info.Ratio : 1F, sequenceRatio = (completed + currentRatio) / total;
 
+                        return new TweenInfo(nameof(Sequence), sequenceRatio, ("Current", current == null ? "null" : current.Info.Title), ("Pending", pending));
+                  }
+            }
 
             internal Sequence() => tweens = new();
             internal Sequence(IEnumerable<ITween> tweens) : this() => Append(tweens);
@@ -35,6 +45,7 @@ namespace Emp37.Tweening
             void ITween.Init()
             {
                   current.Init();
+                  total = tweens.Count + 1;
                   Phase = Phase.Active;
             }
             void ITween.Update()
@@ -73,7 +84,5 @@ namespace Emp37.Tweening
                   tweens.Clear();
                   Phase = Phase.None;
             }
-
-            public override string ToString() => this.Summarize($"Current: <color=#80FF00>{(current != null ? current.ToString() : "null")}</color> | Pending: {tweens.Count}");
       }
 }

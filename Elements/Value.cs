@@ -103,6 +103,20 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => ReferenceEquals(this, Empty) || IsDestroyed;
+            public TweenInfo Info => new($"{nameof(Value<T>)}<{typeof(T).Name}>", progress, new (string, object)[]
+            {
+                  ("Target", linkedTarget == null ? "Destroyed" : linkedTarget.name),
+                  ("Delay", $"{delay:0.00}s"),
+                  ("Range", $"Initial - {a} → Target - {b}"),
+                  ("Duration", $"{1F / inverseDuration: 0.###}s"),
+                  ("Loop Info", $"Type - {loopType} | Remaining - {remainingLoops} | Interval - {loopInterval}"),
+                  ("Ease", easingMethod?.Method?.Name ?? "None"), ("Time Mode", timeMode),
+                  ("Action On Start", actionOnStart?.Method.Name ?? "None"),
+                  ("Action On Update", actionOnUpdate?.Method.Name ?? "None"),
+                  ("Action On Complete", actionOnComplete?.Method.Name ?? "None"),
+                  ("Action On Kill", actionOnKill?.Method.Name ?? "None"),
+                  ("Action On Conclude", actionOnConclude?.Method.Name ?? "None")
+            });
 
             private bool IsDestroyed => linkedTarget == null;
 
@@ -218,6 +232,7 @@ namespace Emp37.Tweening
             #region P O O L   A C T I O N S
             private void OnGet()
             {
+                  Phase = Phase.None;
                   isRecyclable = true;
                   a = b = default;
                   timeMode = Delta.Scaled;
@@ -244,7 +259,6 @@ namespace Emp37.Tweening
                   actionOnConclude = null;
                   actionOnUpdate = null;
                   linkedTarget = null;
-                  Phase = Phase.None;
             }
             #endregion
 
@@ -285,7 +299,5 @@ namespace Emp37.Tweening
                   value.Configure(initialization, target);
                   return value;
             }
-
-            public override string ToString() => this.Summarize($"Target: {(linkedTarget == null ? "Destroyed" : linkedTarget.name)} | Delay: {delay:0.###}s | Progress: {progress:P0} | A: {a} - B: {b} | Duration: {1F / inverseDuration: 0.###}s | Ease: {easingMethod?.Method?.Name ?? "None"} | Mode: {timeMode}");
       }
 }

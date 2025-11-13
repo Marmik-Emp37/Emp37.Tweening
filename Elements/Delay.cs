@@ -14,6 +14,7 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => originalTime <= 0F && predicate == null;
+            public TweenInfo Info => new(nameof(Delay), remainingTime == 0F ? 1F : 1F - (remainingTime / originalTime), ("Remaining", remainingTime), ("Predicate", predicate?.Method.Name ?? "null"), ("Time Mode", timeMode));
 
 
             internal Delay(float duration, Delta mode) { originalTime = duration; timeMode = mode; }
@@ -51,7 +52,5 @@ namespace Emp37.Tweening
             {
                   Phase = Phase.None;
             }
-
-            public override string ToString() => this.Summarize($"Elapsed: {originalTime - remainingTime}/{originalTime} | Predicate: {(predicate == null ? "null" : predicate.Method.Name)} | Mode: {timeMode}");
       }
 }

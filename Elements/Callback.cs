@@ -2,19 +2,17 @@ using System;
 
 namespace Emp37.Tweening
 {
-      public sealed class Invoke : ITween
+      public sealed class Callback : ITween
       {
             private readonly Action action;
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => action == null;
+            public TweenInfo Info => new(nameof(Callback), 1F, ("Method", action?.Method?.Name ?? "null"));
 
 
-            public Invoke(Action action)
-            {
-                  this.action = action;
-            }
+            public Callback(Action action) => this.action = action;
 
             void ITween.Init()
             {
@@ -38,7 +36,5 @@ namespace Emp37.Tweening
             {
                   Phase = Phase.None;
             }
-
-            public override string ToString() => this.Summarize(action?.Method?.Name ?? "null");
       }
 }

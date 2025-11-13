@@ -12,6 +12,7 @@ namespace Emp37.Tweening
 
             private static readonly List<ITween> tweens = new(128);
 
+            public static IReadOnlyList<ITween> Tweens => tweens;
             public static int ActiveTweens => tweens.Count;
 
 
@@ -27,7 +28,7 @@ namespace Emp37.Tweening
                         DestroyImmediate(instance.gameObject);
                         instance = null;
                   }
-                  instance = new GameObject("~" + nameof(Factory)) { hideFlags = HideFlags.DontSave }.AddComponent<Factory>();
+                  instance = new GameObject("~" + nameof(Factory)).AddComponent<Factory>();
             }
 
             private void Awake()
@@ -65,12 +66,7 @@ namespace Emp37.Tweening
 
             public static void Play(ITween tween)
             {
-                  if (instance == null)
-                  {
-                        Log.Error($"Cannot play tween: {nameof(Factory)} not initialized or destroyed.");
-                        return;
-                  }
-                  if (tween == null || tween.IsEmpty) return;
+                  if (instance == null || tween == null || tween.IsEmpty) return;
                   if (tweens.Count == tweens.Capacity)
                   {
                         Log.Warning($"[{typeof(Factory).FullName}] Tween capacity ({tweens.Capacity}) reached. Factory is scaling up, check for leaks or unintended bursts.");

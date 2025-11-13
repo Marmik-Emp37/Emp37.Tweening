@@ -14,6 +14,5 @@ namespace Emp37.Tweening
             public static void Exception(Exception exception) { if (Enabled) Debug.LogException(exception); }
 
             internal static void RejectTween(string message) => Warning($"Tween creation failed: {message}");
-            internal static string Summarize(this ITween tween, string extraInfo) => $"{tween.GetType().Name}: [Tag: {tween.Tag ?? "None"} | Phase: {tween.Phase}]\n[{extraInfo}]";
       }
 }

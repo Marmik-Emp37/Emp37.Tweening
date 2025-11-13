@@ -14,7 +14,7 @@ namespace Emp37.Tweening
       {
             // E X T E N S I O N S
             public static T Play<T>(this T tween) where T : ITween { Factory.Play(tween); return tween; }
-            public static T WithTag<T>(this T tween, string tag) where T : ITween { if (tween != null && !tween.IsEmpty) tween.Tag = tag; return tween; }
+            public static T Tag<T>(this T tween, string tag) where T : ITween { tween.Tag = tag; return tween; }
             public static Sequence Then(this ITween current, ITween next) => Sequence(current, next);
 
             // E L E M E N T   M E T H O D S
@@ -52,6 +52,6 @@ namespace Emp37.Tweening
             public static Delay Delay(float duration, Func<bool> until, Delta mode = Delta.Scaled) => new(duration, until, mode);
             public static Sequence Sequence(params ITween[] tweens) => new(tweens);
             public static Sequence Sequence(IEnumerable<ITween> tweens) => new(tweens);
-            public static Invoke Invoke(Action action) => new(action);
+            public static Callback Callback(Action action) => new(action);
       }
 }
