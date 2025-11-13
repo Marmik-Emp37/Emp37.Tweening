@@ -2,7 +2,7 @@ using System;
 
 namespace Emp37.Tweening
 {
-      public sealed class Invoke : ITween
+      public sealed class Callback : ITween
       {
             private readonly Action action;
 
@@ -11,7 +11,7 @@ namespace Emp37.Tweening
             public bool IsEmpty => action == null;
 
 
-            public Invoke(Action action)
+            public Callback(Action action)
             {
                   this.action = action;
             }

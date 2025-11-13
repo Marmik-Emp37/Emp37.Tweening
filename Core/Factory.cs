@@ -12,6 +12,7 @@ namespace Emp37.Tweening
 
             private static readonly List<ITween> tweens = new(128);
 
+            public static IReadOnlyList<ITween> Tweens => tweens;
             public static int ActiveTweens => tweens.Count;
 
 
@@ -27,7 +28,7 @@ namespace Emp37.Tweening
                         DestroyImmediate(instance.gameObject);
                         instance = null;
                   }
-                  instance = new GameObject("~" + nameof(Factory)) { hideFlags = HideFlags.DontSave }.AddComponent<Factory>();
+                  instance = new GameObject("~" + nameof(Factory)).AddComponent<Factory>();
             }
 
             private void Awake()

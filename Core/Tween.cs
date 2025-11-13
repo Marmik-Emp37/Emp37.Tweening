@@ -52,6 +52,6 @@ namespace Emp37.Tweening
             public static Delay Delay(float duration, Func<bool> until, Delta mode = Delta.Scaled) => new(duration, until, mode);
             public static Sequence Sequence(params ITween[] tweens) => new(tweens);
             public static Sequence Sequence(IEnumerable<ITween> tweens) => new(tweens);
-            public static Invoke Invoke(Action action) => new(action);
+            public static Callback Callback(Action action) => new(action);
       }
 }
