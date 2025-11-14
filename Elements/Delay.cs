@@ -14,7 +14,12 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => originalTime <= 0F && predicate == null;
-
+            public (string Name, object Value)[] DebugInfo => new (string, object)[]
+            {
+                  ("Elapsed", $"{originalTime - remainingTime}/{originalTime}"),
+                  ("Predicate", predicate == null ? "null" : predicate.Method.Name),
+                  ("Time Mode", timeMode),
+            };
 
             internal Delay(float duration, Delta mode) { originalTime = duration; timeMode = mode; }
             internal Delay(Func<bool> until) => predicate = until;

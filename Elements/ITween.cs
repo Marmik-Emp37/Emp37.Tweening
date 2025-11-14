@@ -5,6 +5,7 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; }
             public bool IsEmpty { get; }
+            public (string Name, object Value)[] DebugInfo { get; }
 
             internal void Init();
             internal void Update();

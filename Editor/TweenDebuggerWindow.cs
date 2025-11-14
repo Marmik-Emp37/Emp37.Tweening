@@ -13,12 +13,12 @@ namespace Emp37.Tweening.Editor
       {
             private struct Stats
             {
-                  public string Name;
+                  public string Type;
                   public int Total, Active, Paused;
 
                   public Stats(string name, int total, int active, int paused)
                   {
-                        Name = name;
+                        Type = name;
                         Total = total; Active = active; Paused = paused;
                   }
             }
@@ -29,8 +29,6 @@ namespace Emp37.Tweening.Editor
             private string searchQuery = string.Empty;
 
             private Vector2 scrollPosition;
-
-            private static readonly Color activeColor = new(0.5F, 1F, 0.5F), pausedColor = new(1F, 0.8F, 0.3F);
 
 
             [MenuItem("Tools/Emp37/Tweening.Debugger")]
@@ -82,11 +80,11 @@ namespace Emp37.Tweening.Editor
                   using (new EditorGUILayout.VerticalScope(helpBox))
                   {
                         // title bar
-                        stringRow(boldLabel, "Type", "Total", "Active", "Paused");
+                        stringRow(boldLabel, nameof(Stats.Type), nameof(Stats.Total), nameof(Stats.Active), nameof(Stats.Paused));
 
                         if (hasTweens)
                         {
-                              Dictionary<Type, Stats> typeStats = new();
+                              Dictionary<Type, Stats> typeStats = new(8);
 
                               int total = list.Count;
                               Stats composite = new("-", total, 0, 0);
@@ -99,7 +97,7 @@ namespace Emp37.Tweening.Editor
                                     if (!typeStats.TryGetValue(type, out Stats value))
                                     {
                                           value = default;
-                                          value.Name = type.Name;
+                                          value.Type = type.Name;
                                     }
                                     value.Total++;
 
@@ -133,10 +131,10 @@ namespace Emp37.Tweening.Editor
                         static void stringRow(GUIStyle style, string value1, string value2, string value3, string value4)
                         {
                               EditorGUILayout.BeginHorizontal();
-                              foreach (var value in new string[4] { value1, value2, value3, value4 }) EditorGUILayout.LabelField(value, style, GUILayout.MinWidth(40F));
+                              foreach (string value in new string[4] { value1, value2, value3, value4 }) EditorGUILayout.LabelField(value, style, GUILayout.MinWidth(40F));
                               EditorGUILayout.EndHorizontal();
                         }
-                        static void statisticRow(Stats stats) => stringRow(label, stats.Name, stats.Total.ToString(), stats.Active.ToString(), stats.Paused.ToString());
+                        static void statisticRow(Stats stats) => stringRow(label, stats.Type, stats.Total.ToString(), stats.Active.ToString(), stats.Paused.ToString());
                   }
                   #endregion
 
@@ -176,9 +174,9 @@ namespace Emp37.Tweening.Editor
 
                         foreach (ITween tween in list)
                         {
-                              using (new EditorGUILayout.HorizontalScope(helpBox))
+                              using (new EditorGUILayout.HorizontalScope())
                               {
-                                    EditorGUILayout.LabelField(tween.ToString(), wordWrappedMiniLabel);
+                                    EditorGUILayout.HelpBox(tween.ToString(), MessageType.None);
 
                                     GUILayout.FlexibleSpace();
 

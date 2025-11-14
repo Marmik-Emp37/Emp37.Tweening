@@ -10,7 +10,11 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => current == null && tweens.Count == 0;
-
+            public (string Name, object Value)[] DebugInfo => new (string, object)[]
+            {
+                  ("Current", $"<color=#80FF00>{(current != null ? current.ToString() : "null")}</color>"),
+                  ("Pending", tweens.Count),
+            };
 
             internal Sequence() => tweens = new();
             internal Sequence(IEnumerable<ITween> tweens) : this() => Append(tweens);

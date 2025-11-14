@@ -103,6 +103,16 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => ReferenceEquals(this, Empty) || IsDestroyed;
+            public (string Name, object Value)[] DebugInfo => new (string, object)[]
+            {
+                  ("Target", linkedTarget == null ? "Destroyed" : linkedTarget.name),
+                  ("Delay",$"{delay:0.000}s"),
+                  ("Progress",progress.ToString("P0")),
+                  ("A - B", a.ToString() + b.ToString()),
+                  ("Duration", $"{1F / inverseDuration: 0.###}s"),
+                  ("Ease",easingMethod?.Method?.Name ?? "None"),
+                  ("Time Mode",timeMode),
+            };
 
             private bool IsDestroyed => linkedTarget == null;
 

@@ -9,7 +9,23 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => tweens.Count == 0;
+            public (string Name, object Value)[] DebugInfo
+            {
+                  get
+                  {
+                        int active = 0, paused = 0, finished = 0;
 
+                        foreach (ITween tween in tweens)
+                              switch (tween.Phase) { case Phase.Active: active++; break; case Phase.Paused: paused++; break; default: finished++; break; }
+
+                        return new (string, object)[]
+                        {
+                              ("Children", tweens.Count),
+                              ("Active", active),
+                              ("Finished", finished)
+                        };
+                  }
+            }
 
             internal Parallel(IEnumerable<ITween> tweens)
             {

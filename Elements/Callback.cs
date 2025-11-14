@@ -9,7 +9,10 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => action == null;
-
+            public (string Name, object Value)[] DebugInfo => new (string, object)[]
+            {
+                  ("Method", action?.Method?.Name ?? "null")
+            };
 
             public Callback(Action action)
             {
