@@ -9,31 +9,25 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => tweens.Count == 0;
-            public TweenInfo Info
+            public Info Info
             {
                   get
                   {
                         int total = tweens.Count, active = 0, paused = 0, finished = 0;
                         float ratio = 1F;
-
-                        for (int i = 0; i < total; i++)
+                        if (total > 0)
                         {
-                              ITween tween = tweens[i];
-
-                              switch (tween.Phase)
+                              for (int i = 0; i < total; i++)
                               {
-                                    case Phase.Active: active++; break;
-                                    case Phase.Paused: paused++; break;
-                                    default: finished++; break;
+                                    ITween tween = tweens[i];
+
+                                    switch (tween.Phase) { case Phase.Active: active++; break; case Phase.Paused: paused++; break; default: finished++; break; }
+                                    float progress = tween.Info.Ratio;
+
+                                    if (progress < ratio) ratio = progress;
                               }
-
-                              float progress = tween.Info.Ratio;
-                              if (progress < ratio) ratio = progress;
                         }
-
-                        if (total == 0) ratio = 1F;
-
-                        return new(nameof(Parallel), ratio, ("Children", tweens.Count), ("Active", active), ("Paused", paused), ("Finished", finished));
+                        return new(nameof(Parallel), ratio, new("Children", tweens.Count), new("Active", active), new("Paused", paused), new("Finished", finished));
                   }
             }
 

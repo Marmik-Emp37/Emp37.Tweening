@@ -5,7 +5,7 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; }
             public bool IsEmpty { get; }
-            public TweenInfo Info { get; }
+            public Info Info { get; }
 
             internal void Init();
             internal void Update();

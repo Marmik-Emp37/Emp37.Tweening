@@ -103,19 +103,20 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => ReferenceEquals(this, Empty) || IsDestroyed;
-            public TweenInfo Info => new($"{nameof(Value<T>)}<{typeof(T).Name}>", progress, new (string, object)[]
+            public Info Info => new($"{nameof(Value<T>)}<{typeof(T).Name}>", progress, new Info.Property[]
             {
-                  ("Target", linkedTarget == null ? "Destroyed" : linkedTarget.name),
-                  ("Delay", $"{delay:0.00}s"),
-                  ("Range", $"Initial - {a} → Target - {b}"),
-                  ("Duration", $"{1F / inverseDuration: 0.###}s"),
-                  ("Loop Info", $"Type - {loopType} | Remaining - {remainingLoops} | Interval - {loopInterval}"),
-                  ("Ease", easingMethod?.Method?.Name ?? "None"), ("Time Mode", timeMode),
-                  ("Action On Start", actionOnStart?.Method.Name ?? "None"),
-                  ("Action On Update", actionOnUpdate?.Method.Name ?? "None"),
-                  ("Action On Complete", actionOnComplete?.Method.Name ?? "None"),
-                  ("Action On Kill", actionOnKill?.Method.Name ?? "None"),
-                  ("Action On Conclude", actionOnConclude?.Method.Name ?? "None")
+                  new("Target", linkedTarget == null ? "Destroyed" : linkedTarget.name),
+                  new("Delay", $"{delay:0.00}s"),
+                  new("Range", $"Initial - {a} → Target - {b}"),
+                  new("Duration", $"{1F / inverseDuration: 0.###}s"),
+                  new("Loop Info", $"Type - {loopType} | Remaining - {remainingLoops} | Interval - {loopInterval}"),
+                  new("Ease", easingMethod ?.Method ?.Name ?? "None"),
+                  new("Time Mode", timeMode),
+                  new("Action On Start", actionOnStart ?.Method.Name ?? "None"),
+                  new("Action On Update", actionOnUpdate ?.Method.Name ?? "None"),
+                  new("Action On Complete", actionOnComplete ?.Method.Name ?? "None"),
+                  new("Action On Kill", actionOnKill ?.Method.Name ?? "None"),
+                  new("Action On Conclude", actionOnConclude ?.Method.Name ?? "None")
             });
 
             private bool IsDestroyed => linkedTarget == null;
@@ -273,30 +274,19 @@ namespace Emp37.Tweening
                   if (evaluator == null) { Log.RejectTween($"Missing ({nameof(evaluator)}) function to compute interpolated values."); ok = false; }
                   return ok;
             }
-            private void Setup(UObject link, float duration, Action<T> onEase, Evaluator evaluator)
-            {
-                  linkedTarget = link;
-                  inverseDuration = 1F / duration;
-                  easeTween = onEase;
-                  evaluate = evaluator;
-            }
-            private void Configure(Func<T> initialization, T target) => initTween = () => { a = initialization(); b = target; };
-            private void Configure(Func<T> initialization, Func<T> target) => initTween = () => { a = initialization(); b = target(); };
-
-            internal static Value<T> Fetch(UObject link, Func<T> initialization, T target, float duration, Action<T> update, Evaluator evaluator)
-            {
-                  if (!Validate(link, initialization, target, duration, update, evaluator)) return Empty;
-                  Value<T> value = pool.Get();
-                  value.Setup(link, duration, update, evaluator);
-                  value.Configure(initialization, target);
-                  return value;
-            }
             internal static Value<T> Fetch(UObject link, Func<T> initialization, Func<T> target, float duration, Action<T> update, Evaluator evaluator)
             {
                   if (!Validate(link, initialization, target, duration, update, evaluator)) return Empty;
                   Value<T> value = pool.Get();
-                  value.Setup(link, duration, update, evaluator);
-                  value.Configure(initialization, target);
+                  value.linkedTarget = link;
+                  value.initTween = () =>
+                  {
+                        value.a = initialization();
+                        value.b = target();
+                  };
+                  value.inverseDuration = 1F / duration;
+                  value.easeTween = update;
+                  value.evaluate = evaluator;
                   return value;
             }
       }

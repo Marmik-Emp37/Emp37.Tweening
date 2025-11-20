@@ -11,16 +11,17 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => current == null && tweens.Count == 0;
-            public TweenInfo Info
+            public Info Info
             {
                   get
                   {
                         int pending = tweens.Count, completed = total - pending - 1;
                         float currentRatio = current != null ? current.Info.Ratio : 1F, sequenceRatio = (completed + currentRatio) / total;
 
-                        return new TweenInfo(nameof(Sequence), sequenceRatio, ("Current", current == null ? "null" : current.Info.Title), ("Pending", pending));
+                        return new Info(nameof(Sequence), sequenceRatio, new("Current", current == null ? "null" : current.Info.Title), new("Pending", pending));
                   }
             }
+
 
             internal Sequence() => tweens = new();
             internal Sequence(IEnumerable<ITween> tweens) : this() => Append(tweens);

@@ -9,18 +9,13 @@ namespace Emp37.Tweening.Editor
 {
       using static EditorStyles;
 
-      public sealed class TweenDebuggerWindow : EditorWindow
+      public sealed class TweenDebugger : EditorWindow
       {
             private struct Stats
             {
                   public string Type;
                   public int Total, Active, Paused;
-
-                  public Stats(string type, int total, int active, int paused)
-                  {
-                        Type = type;
-                        Total = total; Active = active; Paused = paused;
-                  }
+                  public Stats(string type, int total, int active, int paused) { Type = type; Total = total; Active = active; Paused = paused; }
             }
 
             private const double REFRESH_INTERVAL = 0.1;
@@ -33,13 +28,13 @@ namespace Emp37.Tweening.Editor
             private static readonly Color activeColor = new(0.3F, 0.9F, 0.3F), pausedColor = new(1F, 0.7F, 0.2F);
 
             private readonly List<ITween> trackedTweens = new();
-            private readonly List<(TweenInfo Info, string Tag)> history = new();
+            private readonly List<(Info Info, string Tag)> history = new();
 
 
             [MenuItem("Tools/Emp37/Tweening.Debugger")]
             public static void ShowWindow()
             {
-                  var window = GetWindow<TweenDebuggerWindow>("Tween Debugger");
+                  var window = GetWindow<TweenDebugger>("Tween Debugger");
                   window.minSize = new Vector2(420F, 320F);
                   window.Show();
             }
@@ -170,7 +165,7 @@ namespace Emp37.Tweening.Editor
                   scrollPosition = scrollView.scrollPosition;
 
                   List<ITween> tweens = isActive ? runningTweens.ToList() : null;
-                  List<(TweenInfo Info, string Tag)> histories = history;
+                  List<(Info Info, string Tag)> histories = history;
 
                   if (!string.IsNullOrWhiteSpace(searchQuery))
                   {
@@ -209,7 +204,7 @@ namespace Emp37.Tweening.Editor
                               }
                         }
                   }
-                  foreach ((TweenInfo info, string tag) in histories)
+                  foreach ((Info info, string tag) in histories)
                   {
                         DrawTween(info, tag, Color.gray);
                   }
@@ -217,7 +212,7 @@ namespace Emp37.Tweening.Editor
             }
 
             private void OnPlayModeChanged(PlayModeStateChange _) => Repaint();
-            private void DrawTween(TweenInfo info, string tag, Color color)
+            private void DrawTween(Info info, string tag, Color color)
             {
                   using (new EditorGUILayout.VerticalScope(helpBox))
                   {
@@ -227,7 +222,7 @@ namespace Emp37.Tweening.Editor
                         rect.width *= info.Ratio;
                         EditorGUI.DrawRect(rect, color);
 
-                        foreach (var (label, value) in info.Properties) EditorGUILayout.LabelField($"{label}: {value}", textField);
+                        foreach (var property in info.Properties) EditorGUILayout.LabelField($"{property.Label}: {property.Value}", textField);
                   }
             }
       }

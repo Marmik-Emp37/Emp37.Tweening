@@ -18,7 +18,7 @@ namespace Emp37.Tweening
             public static Sequence Then(this ITween current, ITween next) => Sequence(current, next);
 
             // E L E M E N T   M E T H O D S
-            public static Value<T> Value<T>(UObject link, Func<T> initialization, T target, float duration, Action<T> update, Value<T>.Evaluator evaluator) => Tweening.Value<T>.Fetch(link, initialization, target, duration, update, evaluator);
+            public static Value<T> Value<T>(UObject link, Func<T> initialization, T target, float duration, Action<T> update, Value<T>.Evaluator evaluator) => Tweening.Value<T>.Fetch(link, initialization, () => target, duration, update, evaluator);
             public static Value<T> Value<T>(UObject link, Func<T> initialization, Func<T> dynamicTarget, float duration, Action<T> update, Value<T>.Evaluator evaluator) => Tweening.Value<T>.Fetch(link, initialization, dynamicTarget, duration, update, evaluator);
 
             private static readonly Value<float>.Evaluator lerpF = Mathf.LerpUnclamped;

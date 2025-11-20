@@ -14,7 +14,7 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => originalTime <= 0F && predicate == null;
-            public TweenInfo Info => new(nameof(Delay), remainingTime == 0F ? 1F : 1F - (remainingTime / originalTime), ("Remaining", remainingTime), ("Predicate", predicate?.Method.Name ?? "null"), ("Time Mode", timeMode));
+            public Info Info => new(nameof(Delay), remainingTime == 0F ? 1F : 1F - (remainingTime / originalTime), new("Remaining", remainingTime), new("Predicate", predicate?.Method.Name ?? "null"), new("Time Mode", timeMode));
 
 
             internal Delay(float duration, Delta mode) { originalTime = duration; timeMode = mode; }

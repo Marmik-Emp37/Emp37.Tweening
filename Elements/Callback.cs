@@ -9,7 +9,7 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => action == null;
-            public TweenInfo Info => new(nameof(Callback), 1F, ("Method", action?.Method?.Name ?? "null"));
+            public Info Info => new(nameof(Callback), 1F, new Info.Property("Method", action?.Method?.Name ?? "null"));
 
 
             public Callback(Action action) => this.action = action;

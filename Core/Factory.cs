@@ -38,7 +38,7 @@ namespace Emp37.Tweening
             }
             private void LateUpdate()
             {
-                  for (int i = tweens.Count - 1; i >= 0; i--) // backwards iteration doesn't skip elements on swap-removal
+                  for (int i = tweens.Count - 1; i >= 0; i--)
                   {
                         ITween tween = tweens[i];
 
