@@ -1,7 +1,7 @@
 ## About
 A fast, composable tweening framework for Unity with clean architecture and zero-allocation at runtime.
 
-**Version: 2.1.0**
+**Version: 2.2.0**
 
 ## Features
 + Allocation free during updates - pooled tweens minimize GC while running.  
@@ -210,25 +210,45 @@ Factory.Kill("Enemy");
 - The Factory dynamically expands internal capacity if you exceed the default limit.
 - Destroyed Unity objects auto-kill their tweens — no null checks needed.
 
-### Logging & Debugging
+## Debugging
+### Tween Debugger Window
+Open **Tools > Emp37 > Tweening.Debugger** to monitor all active tweens in real-time.
+
+**Features:**
+- Live statistics by type and phase.
+- Per-tween details (duration, easing, callbacks, etc).
+- Realtime progress bar with color coding:
+  - 🟢 Green - Active
+  - 🟠 Orange - Paused
+  - 🔘 Gray - Inactive
+- Tag-based search filtering.
+- Pause/Resume/Kill controls per tween or globally.
+- Completion history for analysis.
+
+**Usage:**
 ```csharp
-Log.Info("Message");
-Log.Warning("Warning");
-Log.Exception(exception);
+// tag tweens for easier debugging
+transform.TweenMove(target, 2F).Play().Tag("Player");
+```
+Then search "Player" in debugger to filter tags.
 
-// disable all tween logs
-Log.Enabled = false;
+### Logging
+```csharp
+// selective logging
+Log.Info("Tween system initialized");
+Log.Warning("Tween capacity reached");
+Log.Error("Failed to create tween");
 
-// each tween’s ToString() gives a full runtime summary
-Log.Info(tween.ToString());
+Log.Enabled = false; // disable all logs
 ```
 
+  
 ## Tips
 - Ensure you're calling `.Play()`.
 - Tweens capture initial values on .Play(), not when created.
 - Avoid multiple active tweens modifying the same property.
 - Use tags to group and control tweens (pause old ones before starting new ones).
-- Use setRecyclable(bool) to controll pooling in Value tweens (true by default).
+- Use `setRecyclable(bool)` to controll pooling in Value tweens (true by default).
 - Delay, Invoke, Parallel, and Sequence can nest arbitrarily.
 
 ## License
