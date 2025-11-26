@@ -245,10 +245,10 @@ Log.Enabled = false; // disable all logs
   
 ## Tips
 - Ensure you're calling `.Play()`.
-- Tweens capture initial values on .Play(), not when created.
+- Tweens capture initial values on **Play**, not when created.
 - Avoid multiple active tweens modifying the same property.
 - Use tags to group and control tweens (pause old ones before starting new ones).
-- Use `setRecyclable(bool)` to controll pooling in Value tweens (true by default).
+- Use `setRecyclable(bool)` to control pooling in Value tweens (true by default).
 - Delay, Invoke, Parallel, and Sequence can nest arbitrarily.
 
 ## License
