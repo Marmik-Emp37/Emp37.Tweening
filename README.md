@@ -1,7 +1,7 @@
 ## About
 A fast, composable tweening framework for Unity with clean architecture and zero-allocation at runtime.
 
-**Version: 2.2.0**
+**Version: 2.0.0**
 
 ## Features
 + Allocation free during updates - pooled tweens minimize GC while running.  

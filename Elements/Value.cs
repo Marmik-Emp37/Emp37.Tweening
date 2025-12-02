@@ -10,7 +10,7 @@ namespace Emp37.Tweening
 {
       using static Ease;
 
-      public class Value<T> : ITween
+      public class Value<T> : ITween where T : struct
       {
             internal static readonly Value<T> Empty = new Blank();
             private sealed class Blank : Value<T>
