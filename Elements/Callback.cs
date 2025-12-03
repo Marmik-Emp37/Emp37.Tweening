@@ -9,10 +9,10 @@ namespace Emp37.Tweening
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => action == null;
-            public Info Info => new(nameof(Callback), 1F, new Info.Property("Method", action?.Method?.Name ?? "null"));
+            public Info Info => new(nameof(Callback), new Info.Property("Method", action?.Method?.Name ?? "null"));
 
 
-            public Callback(Action action) => this.action = action;
+            internal Callback(Action action) => this.action = action;
 
             void ITween.Init()
             {
@@ -21,7 +21,7 @@ namespace Emp37.Tweening
             void ITween.Update()
             {
                   Utils.SafeInvoke(action);
-                  Phase = Phase.Complete;
+                  Phase = Phase.Finished;
             }
 
             public void Pause()

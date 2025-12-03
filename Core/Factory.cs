@@ -43,7 +43,7 @@ namespace Emp37.Tweening
                         ITween tween = tweens[i];
 
                         if (tween.Phase is Phase.Active) tween.Update();
-                        if (tween.Phase is not (Phase.Complete or Phase.None)) continue;
+                        if (tween.Phase is not (Phase.Finished or Phase.None)) continue;
 
                         int last = tweens.Count - 1;
                         if (i != last) tweens[i] = tweens[last];
@@ -71,8 +71,8 @@ namespace Emp37.Tweening
                   {
                         Log.Warning($"[{typeof(Factory).FullName}] Tween capacity ({tweens.Capacity}) reached. Factory is scaling up, check for leaks or unintended bursts.");
                   }
-                  tweens.Add(tween);
                   tween.Init();
+                  tweens.Add(tween);
 
                   instance.enabled = true;
             }

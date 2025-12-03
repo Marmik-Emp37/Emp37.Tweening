@@ -76,7 +76,7 @@ namespace Emp37.Tweening.Editor
                   for (int i = trackedTweens.Count - 1; i >= 0; i--)
                   {
                         ITween tween = trackedTweens[i];
-                        if (tween.Phase is not (Phase.Complete or Phase.None)) continue;
+                        if (tween.Phase is not (Phase.Finished or Phase.None)) continue;
 
                         history.Add((tween.Info, tween.Tag));
                         trackedTweens.RemoveAt(i);
@@ -206,13 +206,13 @@ namespace Emp37.Tweening.Editor
                   }
                   foreach ((Info info, string tag) in histories)
                   {
-                        DrawTween(info, tag, Color.gray);
+                        DrawTween(in info, tag, Color.gray);
                   }
                   #endregion
             }
 
             private void OnPlayModeChanged(PlayModeStateChange _) => Repaint();
-            private void DrawTween(Info info, string tag, Color color)
+            private void DrawTween(in Info info, string tag, Color color)
             {
                   using (new EditorGUILayout.VerticalScope(helpBox))
                   {

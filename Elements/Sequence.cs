@@ -52,12 +52,12 @@ namespace Emp37.Tweening
             void ITween.Update()
             {
                   if (current.Phase is Phase.Active) current.Update();
-                  if (current.Phase is not Phase.Complete and not Phase.None) return;
+                  if (current.Phase is not Phase.Finished and not Phase.None) return;
 
                   if (tweens.Count == 0)
                   {
                         current = null;
-                        Phase = Phase.Complete;
+                        Phase = Phase.Finished;
                   }
                   else
                   {

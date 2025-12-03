@@ -15,12 +15,13 @@ namespace Emp37.Tweening
             internal static readonly Value<T> Empty = new Blank();
             private sealed class Blank : Value<T>
             {
+                  public override Value<T> addModifier(Modifier method) => this;
                   public override Value<T> disableLoop() => this;
                   public override Value<T> setRecyclable(bool _) => this;
                   public override Value<T> setDelay(float _) => this;
                   public override Value<T> setEase(Type _) => this;
                   public override Value<T> setEase(AnimationCurve _) => this;
-                  public override Value<T> setEase(Function _) => this;
+                  public override Value<T> setEase(Method _) => this;
                   public override Value<T> setLoop(int _, LoopType __, float ___) => this;
                   public override Value<T> setProgress(float _) => this;
                   public override Value<T> setTarget(T _) => this;
@@ -39,6 +40,7 @@ namespace Emp37.Tweening
             }
 
 
+            public delegate T Modifier(T value);
             public delegate T Evaluator(T a, T b, float ratio);
 
             private static readonly ObjectPool<Value<T>> pool = new(() => new Value<T>(), actionOnGet: v => v.OnGet(), actionOnRelease: v => v.OnRelease(), collectionCheck: true, defaultCapacity: 64);
@@ -52,7 +54,8 @@ namespace Emp37.Tweening
 
             private Action initTween;
             private Action<T> easeTween;
-            private Function easingMethod;
+            private Method easingMethod;
+            private Modifier modifier;
             private Evaluator evaluate;
 
             private UObject linkedTarget; // used to auto-kill tween if this object is destroyed
@@ -65,7 +68,7 @@ namespace Emp37.Tweening
             private Action actionOnStart, actionOnComplete, actionOnKill, actionOnConclude;
             private Action<float> actionOnUpdate;
 
-            private static readonly IReadOnlyDictionary<Type, Function> easeTypeMap = new Dictionary<Type, Function>
+            private static readonly IReadOnlyDictionary<Type, Method> easeTypeMap = new Dictionary<Type, Method>
             {
                   { Type.Linear, Linear },
                   { Type.InSine, InSine },
@@ -154,6 +157,7 @@ namespace Emp37.Tweening
                   float ratio = direction > 0 ? progress : 1F - progress;
                   float easedRatio = easingMethod(ratio);
                   T value = evaluate(a, b, easedRatio);
+                  if (modifier != null) value = modifier(value);
                   try { easeTween(value); } catch (Exception ex) { HandleException(ex); return; }
 
                   Utils.SafeInvoke(actionOnUpdate, easedRatio);
@@ -170,7 +174,7 @@ namespace Emp37.Tweening
                         return;
                   }
 
-                  Phase = Phase.Complete;
+                  Phase = Phase.Finished;
                   Utils.SafeInvoke(actionOnComplete);
 
                   Conclude();
@@ -186,7 +190,7 @@ namespace Emp37.Tweening
             }
             public virtual void Kill()
             {
-                  if (Phase is Phase.None or Phase.Complete) return;
+                  if (Phase is Phase.None or Phase.Finished) return;
 
                   Phase = Phase.None;
                   Utils.SafeInvoke(actionOnKill);
@@ -210,12 +214,13 @@ namespace Emp37.Tweening
 
 
             #region F L U E N T   A P I
-#pragma warning disable IDE1006 // Naming Styles
+#pragma warning disable IDE1006 // naming styles
+            public virtual Value<T> addModifier(Modifier method) { if (!IsDestroyed && method != null) modifier = modifier == null ? method : (value => method(modifier(value))); return this; }
             public virtual Value<T> disableLoop() { loopType = LoopType.None; remainingLoops = 0; return this; }
             public virtual Value<T> setRecyclable(bool value) { isRecyclable = value; return this; }
             public virtual Value<T> setDelay(float seconds) { delay = seconds; return this; }
             public virtual Value<T> setEase(Type type) { if (!IsDestroyed) easingMethod = easeTypeMap[type]; return this; }
-            public virtual Value<T> setEase(Function function) { if (!IsDestroyed) easingMethod = function; return this; }
+            public virtual Value<T> setEase(Method method) { if (!IsDestroyed) easingMethod = method; return this; }
             public virtual Value<T> setEase(AnimationCurve curve) { if (!IsDestroyed) easingMethod = curve.Evaluate; return this; }
             public virtual Value<T> setLoop(int cycles, LoopType type, float delay = 0F) { remainingLoops = (cycles <= 0) ? -1 : cycles; loopType = type; loopInterval = Mathf.Max(0F, delay); return this; }
             public virtual Value<T> setProgress(float normalizedValue) { progress = Mathf.Clamp01(normalizedValue); return this; }
@@ -254,6 +259,7 @@ namespace Emp37.Tweening
                   initTween = null;
                   easeTween = null;
                   easingMethod = null;
+                  modifier = null;
                   actionOnStart = null;
                   actionOnComplete = null;
                   actionOnKill = null;
@@ -289,5 +295,23 @@ namespace Emp37.Tweening
                   value.evaluate = evaluator;
                   return value;
             }
+      }
+
+      public static class ValueExtensions
+      {
+            private static float Step(float value, float step) => step > 0F ? Mathf.Round(value / step) * step : value;
+
+#pragma warning disable IDE1006 // Naming Styles
+            public static Value<float> setSnap(this Value<float> tween, float step) => tween.addModifier(value => Step(value, step));
+            public static Value<Vector2> setSnap(this Value<Vector2> tween, Vector2 step) => tween.addModifier(value => new(Step(value.x, step.x), Step(value.y, step.y)));
+            public static Value<Vector2> setSnap(this Value<Vector2> tween, float step) => tween.setSnap(step * Vector2.one);
+            public static Value<Vector3> setSnap(this Value<Vector3> tween, Vector3 step) => tween.addModifier(value => new(Step(value.x, step.x), Step(value.y, step.y), Step(value.z, step.z)));
+            public static Value<Vector3> setSnap(this Value<Vector3> tween, float step) => tween.setSnap(step * Vector3.one);
+            public static Value<Vector4> setSnap(this Value<Vector4> tween, Vector4 step) => tween.addModifier(value => new(Step(value.x, step.x), Step(value.y, step.y), Step(value.z, step.z), Step(value.w, step.w)));
+            public static Value<Vector4> setSnap(this Value<Vector4> tween, float step) => tween.setSnap(step * Vector4.one);
+            public static Value<Color> setSnap(this Value<Color> tween, Color step, bool preserveAlpha = false) =>
+            tween.addModifier(preserveAlpha ? value => new(Step(value.r, step.r), Step(value.g, step.g), Step(value.b, step.b), value.a) : value => new(Step(value.r, step.r), Step(value.g, step.g), Step(value.b, step.b), Step(value.a, step.a)));
+            public static Value<Color> setSnap(this Value<Color> tween, float step, bool preserveAlpha = false) => tween.setSnap(step * Color.white, preserveAlpha);
+#pragma warning restore IDE1006
       }
 }

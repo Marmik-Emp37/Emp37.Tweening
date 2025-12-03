@@ -54,13 +54,13 @@ namespace Emp37.Tweening
                         ITween current = tweens[i];
 
                         if (current.Phase is Phase.Active) current.Update();
-                        if (current.Phase is not Phase.Complete and not Phase.None) continue;
+                        if (current.Phase is not Phase.Finished and not Phase.None) continue;
 
                         int last = tweens.Count - 1;
                         if (i != last) tweens[i] = tweens[last];
                         tweens.RemoveAt(last);
 
-                        if (tweens.Count == 0) Phase = Phase.Complete;
+                        if (tweens.Count == 0) Phase = Phase.Finished;
                   }
             }
 

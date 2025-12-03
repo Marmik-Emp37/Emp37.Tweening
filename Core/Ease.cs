@@ -42,7 +42,7 @@ namespace Emp37.Tweening
             }
 
 
-            public delegate float Function(float t);
+            public delegate float Method(float t);
 
 
             // penner's Easing Notations

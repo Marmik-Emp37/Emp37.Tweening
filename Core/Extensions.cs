@@ -10,6 +10,7 @@ namespace Emp37.Tweening
       public static class Extensions
       {
             // P O S I T I O N
+            public static Value<Vector3> TweenMove(this Transform transform, Transform target, float duration) => Value(transform, () => transform.position, () => target.position, duration, value => transform.position = value);
             public static Value<Vector3> TweenMove(this Transform transform, Vector3 target, float duration, bool relative = false) => Value(transform, () => transform.position, () => relative ? transform.position + target : target, duration, value => transform.position = value);
             public static Value<Vector2> TweenMove(this Transform transform, Vector2 target, float duration, bool relative = false) => Value(transform, () => (Vector2) transform.position, () => relative ? (Vector2) transform.position + target : target, duration, value => transform.position = value);
             public static Value<float> TweenMoveX(this Transform transform, float target, float duration, bool relative = false) => Value(transform, () => transform.position.x, () => relative ? transform.position.x + target : target, duration, value => { var pos = transform.position; pos.x = value; transform.position = pos; });
@@ -18,6 +19,7 @@ namespace Emp37.Tweening
 
 
             // L O C A L   P O S I T I O N
+            public static Value<Vector3> TweenMoveLocal(this Transform transform, Transform target, float duration) => Value(transform, () => transform.localPosition, () => target.localPosition, duration, value => transform.localPosition = value);
             public static Value<Vector3> TweenMoveLocal(this Transform transform, Vector3 target, float duration, bool relative = false) => Value(transform, () => transform.localPosition, () => relative ? transform.localPosition + target : target, duration, value => transform.localPosition = value);
             public static Value<Vector2> TweenMoveLocal(this Transform transform, Vector2 target, float duration, bool relative = false) => Value(transform, () => (Vector2) transform.localPosition, () => relative ? (Vector2) transform.localPosition + target : target, duration, value => transform.localPosition = value);
             public static Value<float> TweenMoveLocalX(this Transform transform, float target, float duration, bool relative = false) => Value(transform, () => transform.localPosition.x, () => relative ? transform.localPosition.x + target : target, duration, value => { var pos = transform.localPosition; pos.x = value; transform.localPosition = pos; });
@@ -26,6 +28,7 @@ namespace Emp37.Tweening
 
 
             // R O T A T I O N
+            public static Value<Quaternion> TweenRotate(this Transform transform, Transform target, float duration) => Value(transform, () => transform.rotation, () => target.rotation, duration, value => transform.rotation = value);
             public static Value<Quaternion> TweenRotate(this Transform transform, Quaternion target, float duration) => Value(transform, () => transform.rotation, target, duration, value => transform.rotation = value);
             public static Value<Quaternion> TweenRotate(this Transform transform, Vector3 target, float duration) => Value(transform, () => transform.rotation, () => Quaternion.Euler(target), duration, value => transform.rotation = value);
             public static Value<float> TweenRotateX(this Transform transform, float target, float duration, bool relative = false) => Value(transform, () => transform.eulerAngles.x, () => transform.eulerAngles.x + (relative ? target : Mathf.DeltaAngle(transform.eulerAngles.x, target)), duration, value => { var euler = transform.eulerAngles; euler.x = value; transform.rotation = Quaternion.Euler(euler); });
@@ -34,6 +37,7 @@ namespace Emp37.Tweening
 
 
             // L O C A L   R O T A T I O N
+            public static Value<Quaternion> TweenRotateLocal(this Transform transform, Transform target, float duration) => Value(transform, () => transform.localRotation, () => target.localRotation, duration, value => transform.localRotation = value);
             public static Value<Quaternion> TweenRotateLocal(this Transform transform, Quaternion target, float duration) => Value(transform, () => transform.localRotation, target, duration, value => transform.localRotation = value);
             public static Value<Quaternion> TweenRotateLocal(this Transform transform, Vector3 target, float duration) => Value(transform, () => transform.localRotation, () => Quaternion.Euler(target), duration, value => transform.localRotation = value);
             public static Value<float> TweenRotateLocalX(this Transform transform, float target, float duration, bool relative = false) => Value(transform, () => transform.localEulerAngles.x, () => transform.localEulerAngles.x + (relative ? target : Mathf.DeltaAngle(transform.localEulerAngles.x, target)), duration, value => { var euler = transform.localEulerAngles; euler.x = value; transform.rotation = Quaternion.Euler(euler); });
@@ -42,6 +46,7 @@ namespace Emp37.Tweening
 
 
             // S C A L E
+            public static Value<Vector3> TweenScale(this Transform transform, Transform target, float duration) => Value(transform, () => transform.localScale, () => target.localScale, duration, value => transform.localScale = value);
             public static Value<Vector3> TweenScale(this Transform transform, Vector3 target, float duration, bool relative = false) => Value(transform, () => transform.localScale, () => relative ? transform.localScale + target : target, duration, value => transform.localScale = value);
             public static Value<float> TweenScaleX(this Transform transform, float target, float duration, bool relative = false) => Value(transform, () => transform.localScale.x, () => relative ? transform.localScale.x + target : target, duration, value => { var scale = transform.localScale; scale.x = value; transform.localScale = scale; });
             public static Value<float> TweenScaleY(this Transform transform, float target, float duration, bool relative = false) => Value(transform, () => transform.localScale.y, () => relative ? transform.localScale.y + target : target, duration, value => { var scale = transform.localScale; scale.y = value; transform.localScale = scale; });
@@ -50,71 +55,46 @@ namespace Emp37.Tweening
 
             // R E N D E R E R
             public static Value<Color> TweenColor(this SpriteRenderer renderer, Color target, float duration) => Value(renderer, () => renderer.color, target, duration, value => renderer.color = value);
-            public static Value<float> TweenMaterialPropertyBlock(this Renderer renderer, string property, float target, float duration)
+            public static Value<float> TweenMaterialBlock(this Renderer renderer, string property, float target, float duration, bool relative = false)
             {
                   if (!renderer.sharedMaterial.HasProperty(property))
                   {
                         Log.RejectTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
                         return Value<float>.Empty;
                   }
+
                   MaterialPropertyBlock block = new();
                   int id = Shader.PropertyToID(property);
-                  return Value(renderer,
-                        () =>
-                        {
-                              renderer.GetPropertyBlock(block);
-                              return block.GetFloat(id);
-                        },
-                        target, duration,
-                        value =>
-                        {
-                              block.SetFloat(id, value);
-                              renderer.SetPropertyBlock(block);
-                        });
+
+                  return Value(renderer, init, () => relative ? init() + target : target, duration, value => { block.SetFloat(id, value); renderer.SetPropertyBlock(block); });
+
+                  float init() { renderer.GetPropertyBlock(block); return block.GetFloat(id); }
             }
-            public static Value<Color> TweenMaterialPropertyBlock(this Renderer renderer, string property, Color target, float duration)
+            public static Value<Color> TweenMaterialBlock(this Renderer renderer, string property, Color target, float duration)
             {
                   if (!renderer.sharedMaterial.HasProperty(property))
                   {
                         Log.RejectTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
                         return Value<Color>.Empty;
                   }
+
                   MaterialPropertyBlock block = new();
                   int id = Shader.PropertyToID(property);
-                  return Value(renderer,
-                        () =>
-                        {
-                              renderer.GetPropertyBlock(block);
-                              return block.GetColor(id);
-                        },
-                        target, duration,
-                        value =>
-                        {
-                              block.SetColor(id, value);
-                              renderer.SetPropertyBlock(block);
-                        });
+
+                  return Value(renderer, () => { renderer.GetPropertyBlock(block); return block.GetColor(id); }, target, duration, value => { block.SetColor(id, value); renderer.SetPropertyBlock(block); });
             }
-            public static Value<Vector4> TweenMaterialPropertyBlock(this Renderer renderer, string property, Vector4 target, float duration)
+            public static Value<Vector4> TweenMaterialBlock(this Renderer renderer, string property, Vector4 target, float duration)
             {
                   if (!renderer.sharedMaterial.HasProperty(property))
                   {
                         Log.RejectTween($"Renderer '{renderer.name}' does not contain float property '{property}'.");
                         return Value<Vector4>.Empty;
                   }
+
                   MaterialPropertyBlock block = new();
                   int id = Shader.PropertyToID(property);
-                  return Value(renderer,
-                        () =>
-                        {
-                              renderer.GetPropertyBlock(block);
-                              return block.GetVector(id);
-                        },
-                        target, duration,
-                        value =>
-                        {
-                              block.SetVector(id, value);
-                              renderer.SetPropertyBlock(block);
-                        });
+
+                  return Value(renderer, () => { renderer.GetPropertyBlock(block); return block.GetVector(id); }, target, duration, value => { block.SetVector(id, value); renderer.SetPropertyBlock(block); });
             }
 
 
@@ -162,10 +142,8 @@ namespace Emp37.Tweening
             public static Value<Vector2> TweenMove(this RectTransform transform, Vector2 target, float duration, bool relative = false) => Value(transform, () => transform.anchoredPosition, () => relative ? transform.anchoredPosition + target : target, duration, value => transform.anchoredPosition = value);
             public static Value<Vector3> TweenMove(this RectTransform transform, Vector3 target, float duration, bool relative = false) => Value(transform, () => transform.anchoredPosition3D, () => relative ? transform.anchoredPosition3D + target : target, duration, value => transform.anchoredPosition3D = value);
             public static Value<Vector2> TweenSize(this RectTransform transform, Vector2 target, float duration, bool relative = false) => Value(transform, () => transform.sizeDelta, () => relative ? transform.sizeDelta + target : target, duration, value => transform.sizeDelta = value);
+         
             public static Value<float> TweenFade(this CanvasGroup group, float target, float duration) => Value(group, () => group.alpha, target, duration, value => group.alpha = value);
-
-
-            // U I - G R A P H I C S
             public static Value<float> TweenAlpha(this Graphic graphic, float target, float duration) => Value(graphic, () => graphic.color.a, target, duration, value => { var color = graphic.color; color.a = value; graphic.color = color; });
             public static Value<Color> TweenColor(this Graphic graphic, Color target, float duration) => Value(graphic, () => graphic.color, target, duration, value => graphic.color = value);
             public static Value<float> TweenFill(this Image image, float target, float duration) => Value(image, () => image.fillAmount, target, duration, value => image.fillAmount = value);

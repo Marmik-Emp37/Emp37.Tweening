@@ -36,7 +36,7 @@ namespace Emp37.Tweening
                   else
                   if (predicate == null || predicate())
                   {
-                        Phase = Phase.Complete;
+                        Phase = Phase.Finished;
                   }
             }
 
