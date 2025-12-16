@@ -1,7 +1,7 @@
 ## About
 A fast, composable tweening framework for Unity with clean architecture and zero-allocation at runtime.
 
-**Version: 2.0.0**
+**Version: 2.1.0**
 
 ## Features
 + Allocation free during updates - pooled tweens minimize GC while running.  
@@ -83,10 +83,11 @@ Tween.Value<CustomStruct>(obj, () => start, target, 2F, v => Apply(v), (a, b, t)
      .Play();
 
 // example using extension
-transform.TweenRotateX(20F, 1F).setLoop(2, LoopType.Restart).Play();
+transform.TweenRotateX(20F, 1F).setLoop(2, LoopType.Restart).Snap(5F).Play();
 ```
 | Method                                                      | Description                                                     |
 | ----------------------------------------------------------- | --------------------------------------------------------------- |
+| **addModifier(Modifier modifier)**                          | Modifies the processed value before it is applied               |
 | **setEase(Type type)**                                      | Sets an easing function using a built-in `Ease.Type`            |
 | **setEase(AnimationCurve curve)**                           | Uses a custom `AnimationCurve` for easing                       |
 | **setEase(Function func)**                                  | Assigns a custom easing delegate (`float → float`)              |
@@ -132,7 +133,7 @@ Tween.Delay(0.5F).Then(transform.TweenColor(Color.red, 0.2F)).Then(Tween.Invoke(
 // UI reveal: fade in panel, slide title, and play sound all at once
 Tween.Parallel(
     image.TweenFade(1F, 0.3F),
-    text.TweenScale(Vector3.one, 0.4F).setEase(Ease.Type.OutCubic),
+    text.TweenScale(Vector3.one, 0.4F, relative: true).setEase(Ease.Type.OutCubic),
     Tween.Invoke(() => audio.PlayOneShot(pop))
 ).Play();
 ```
@@ -174,6 +175,32 @@ Each easing type also supports directional variants:
 + **Out** → starts quickly, slows down.
 + **InOut** → combines both (ease-in then ease-out).
 
+## Advances Features
+### Snapping
+Snap tweens to fixed increments for deterministic motion or stylized effects. 
+Useful for grid-based movement, pixel-perfect UI, or stepped animations.
+```csharp
+floatingTween.Snap(0.5F);         // snap float values in 0.5 increments
+vectorTween.Snap(new(0.25F, 1F)); // snap Vector2: 0.25 on X, 1.0 on Y
+```
+
+### Relative Tweens
+Most extension methods support relative tweening, allowing values to be applied as offsets from the initial state rather than absolute targets.
+This is ideal for reusable animations that should adapt to the object’s current position, scale, or rotation.
+```csharp
+transform.TweenMoveY(2F, 1F, relative: true).Play();
+```
+
+### Value Modifiers
+Value tweens can be extended with modifiers, which transform the interpolated value before it is applied.
+
+Modifiers are composable and executed in the order they are added.
+```csharp
+tween
+    .addModifier(value => Mathf.Abs(value))
+    .addModifier(value => value > 1F ? value * 0.5F : value);
+```
+
 ## Lifecycle Control
 ### Individual Tween
 ```csharp
@@ -208,7 +235,7 @@ Factory.Kill("Enemy");
 ### Configuration
 - Tweens automatically remove themselves when complete or killed.
 - The Factory dynamically expands internal capacity if you exceed the default limit.
-- Destroyed Unity objects auto-kill their tweens — no null checks needed.
+- Destroyed Unity objects auto-kill their tweens. No null checks needed.
 
 ## Debugging
 ### Tween Debugger Window
@@ -228,7 +255,7 @@ Open **Tools > Emp37 > Tweening.Debugger** to monitor all active tweens in real-
 **Usage:**
 ```csharp
 // tag tweens for easier debugging
-transform.TweenMove(target, 2F).Play().Tag("Player");
+transform.TweenMove(target, 2F).Play().WithTag("Player");
 ```
 Then search "Player" in debugger to filter tags.
 
