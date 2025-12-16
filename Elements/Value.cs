@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using UnityEngine;
 using UnityEngine.Pool;
@@ -149,7 +150,8 @@ namespace Emp37.Tweening
                   if (!bootstrapped)
                   {
                         bootstrapped = true;
-                        try { initTween(); } catch (Exception ex) { HandleException(ex); return; }
+                        try { initTween(); }
+                        catch (Exception ex) { HandleException(ex); return; }
                         Utils.SafeInvoke(actionOnStart);
                   }
 
@@ -157,8 +159,13 @@ namespace Emp37.Tweening
                   float ratio = direction > 0 ? progress : 1F - progress;
                   float easedRatio = easingMethod(ratio);
                   T value = evaluate(a, b, easedRatio);
-                  if (modifier != null) value = modifier(value);
-                  try { easeTween(value); } catch (Exception ex) { HandleException(ex); return; }
+                  if (modifier != null)
+                  {
+                        try { value = modifier(value); }
+                        catch (Exception) { }
+                  }
+                  try { easeTween(value); }
+                  catch (Exception ex) { HandleException(ex); return; }
 
                   Utils.SafeInvoke(actionOnUpdate, easedRatio);
 
@@ -269,6 +276,7 @@ namespace Emp37.Tweening
             }
             #endregion
 
+
             private static bool Validate(UObject link, object initialization, object target, float duration, object update, object evaluator)
             {
                   bool ok = true;
@@ -299,19 +307,39 @@ namespace Emp37.Tweening
 
       public static class ValueExtensions
       {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private static float Step(float value, float step) => step > 0F ? Mathf.Round(value / step) * step : value;
 
-#pragma warning disable IDE1006 // Naming Styles
-            public static Value<float> setSnap(this Value<float> tween, float step) => tween.addModifier(value => Step(value, step));
-            public static Value<Vector2> setSnap(this Value<Vector2> tween, Vector2 step) => tween.addModifier(value => new(Step(value.x, step.x), Step(value.y, step.y)));
+
+#pragma warning disable IDE1006 // naming styles
+            public static Value<float> setSnap(this Value<float> tween, float step)
+            {
+                  if (step <= 0F) return tween;
+                  return tween.addModifier(value => Step(value, step));
+            }
+            public static Value<Vector2> setSnap(this Value<Vector2> tween, Vector2 step)
+            {
+                  if (step.x <= 0F && step.y <= 0F) return tween;
+                  return tween.addModifier(value => new(Step(value.x, step.x), Step(value.y, step.y)));
+            }
             public static Value<Vector2> setSnap(this Value<Vector2> tween, float step) => tween.setSnap(step * Vector2.one);
-            public static Value<Vector3> setSnap(this Value<Vector3> tween, Vector3 step) => tween.addModifier(value => new(Step(value.x, step.x), Step(value.y, step.y), Step(value.z, step.z)));
+            public static Value<Vector3> setSnap(this Value<Vector3> tween, Vector3 step)
+            {
+                  if (step.x <= 0F && step.y <= 0F && step.z <= 0F) return tween;
+                  return tween.addModifier(value => new(Step(value.x, step.x), Step(value.y, step.y), Step(value.z, step.z)));
+            }
             public static Value<Vector3> setSnap(this Value<Vector3> tween, float step) => tween.setSnap(step * Vector3.one);
-            public static Value<Vector4> setSnap(this Value<Vector4> tween, Vector4 step) => tween.addModifier(value => new(Step(value.x, step.x), Step(value.y, step.y), Step(value.z, step.z), Step(value.w, step.w)));
+            public static Value<Vector4> setSnap(this Value<Vector4> tween, Vector4 step)
+            {
+                  if (step.x <= 0F && step.y <= 0F && step.z <= 0F && step.w <= 0F) return tween;
+                  return tween.addModifier(value => new(Step(value.x, step.x), Step(value.y, step.y), Step(value.z, step.z), Step(value.w, step.w)));
+            }
             public static Value<Vector4> setSnap(this Value<Vector4> tween, float step) => tween.setSnap(step * Vector4.one);
-            public static Value<Color> setSnap(this Value<Color> tween, Color step, bool preserveAlpha = false) =>
-            tween.addModifier(preserveAlpha ? value => new(Step(value.r, step.r), Step(value.g, step.g), Step(value.b, step.b), value.a) : value => new(Step(value.r, step.r), Step(value.g, step.g), Step(value.b, step.b), Step(value.a, step.a)));
-            public static Value<Color> setSnap(this Value<Color> tween, float step, bool preserveAlpha = false) => tween.setSnap(step * Color.white, preserveAlpha);
+            public static Value<Color> setSnap(this Value<Color> tween, Color step)
+            {
+                  return tween.addModifier(value => new(Step(value.r, step.r), Step(value.g, step.g), Step(value.b, step.b), Step(value.a, step.a)));
+            }
+            public static Value<Color> setSnap(this Value<Color> tween, float step) => tween.setSnap(step * Color.white);
 #pragma warning restore IDE1006
       }
 }
