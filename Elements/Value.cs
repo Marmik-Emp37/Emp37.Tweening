@@ -41,8 +41,12 @@ namespace Emp37.Tweening
             }
 
 
+            /// <summary>Transforms a value during interpolation.</summary>
             public delegate T Modifier(T value);
+
+            /// <summary>Interpolates between two values.</summary>
             public delegate T Evaluator(T a, T b, float ratio);
+
 
             private static readonly ObjectPool<Value<T>> pool = new(() => new Value<T>(), actionOnGet: v => v.OnGet(), actionOnRelease: v => v.OnRelease(), collectionCheck: true, defaultCapacity: 64);
             private bool isRecyclable;
@@ -162,7 +166,7 @@ namespace Emp37.Tweening
                   if (modifier != null)
                   {
                         try { value = modifier(value); }
-                        catch (Exception) { }
+                        catch (Exception ex) { Log.Error($"Modifier exception: {ex.Message}"); }
                   }
                   try { easeTween(value); }
                   catch (Exception ex) { HandleException(ex); return; }
@@ -303,43 +307,5 @@ namespace Emp37.Tweening
                   value.evaluate = evaluator;
                   return value;
             }
-      }
-
-      public static class ValueExtensions
-      {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private static float Step(float value, float step) => step > 0F ? Mathf.Round(value / step) * step : value;
-
-
-#pragma warning disable IDE1006 // naming styles
-            public static Value<float> setSnap(this Value<float> tween, float step)
-            {
-                  if (step <= 0F) return tween;
-                  return tween.addModifier(value => Step(value, step));
-            }
-            public static Value<Vector2> setSnap(this Value<Vector2> tween, Vector2 step)
-            {
-                  if (step.x <= 0F && step.y <= 0F) return tween;
-                  return tween.addModifier(value => new(Step(value.x, step.x), Step(value.y, step.y)));
-            }
-            public static Value<Vector2> setSnap(this Value<Vector2> tween, float step) => tween.setSnap(step * Vector2.one);
-            public static Value<Vector3> setSnap(this Value<Vector3> tween, Vector3 step)
-            {
-                  if (step.x <= 0F && step.y <= 0F && step.z <= 0F) return tween;
-                  return tween.addModifier(value => new(Step(value.x, step.x), Step(value.y, step.y), Step(value.z, step.z)));
-            }
-            public static Value<Vector3> setSnap(this Value<Vector3> tween, float step) => tween.setSnap(step * Vector3.one);
-            public static Value<Vector4> setSnap(this Value<Vector4> tween, Vector4 step)
-            {
-                  if (step.x <= 0F && step.y <= 0F && step.z <= 0F && step.w <= 0F) return tween;
-                  return tween.addModifier(value => new(Step(value.x, step.x), Step(value.y, step.y), Step(value.z, step.z), Step(value.w, step.w)));
-            }
-            public static Value<Vector4> setSnap(this Value<Vector4> tween, float step) => tween.setSnap(step * Vector4.one);
-            public static Value<Color> setSnap(this Value<Color> tween, Color step)
-            {
-                  return tween.addModifier(value => new(Step(value.r, step.r), Step(value.g, step.g), Step(value.b, step.b), Step(value.a, step.a)));
-            }
-            public static Value<Color> setSnap(this Value<Color> tween, float step) => tween.setSnap(step * Color.white);
-#pragma warning restore IDE1006
       }
 }

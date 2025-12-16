@@ -162,19 +162,20 @@ namespace Emp37.Tweening
             {
                   private static readonly Keyframe Zero = new(0F, 0F), One = new(1F, 1F), Exit = new(1F, 0F);
 
-                  private static readonly Keyframe[] anticipateKeys = { Zero, new(0.3F, -0.3F), One };
-                  private static readonly Keyframe[] popKeys = { Zero, new(0.6F, 0.05F, 0.25F, 0.75F), new(0.85F, 0.9F, 1.25F, 1.25F), One };
-                  private static readonly Keyframe[] punchKeys = { Zero, new(0.1F, 1F), new(0.25F, -0.6F), new(0.5F, 0.4F), new(0.7F, -0.2F), Exit };
-                  private static readonly Keyframe[] shakeKeys = { Zero, new(0.1F, 0.5F), new(0.2F, -0.5F), new(0.3F, 0.4F), new(0.4F, -0.4F), new(0.5F, 0.3F), new(0.6F, -0.3F), new(0.7F, 0.2F), new(0.8F, -0.2F), new(0.9F, 0.1F), Exit };
-                  private static readonly Keyframe[] snappyKeys = { Zero, new(0.3F, 1.05F, 0.75F, 0.75F), new(0.6F, 0.95F), One };
-                  private static readonly Keyframe[] springKeys = { Zero, new(0.3F, 1.3F), new(0.6F, 0.8F), new(0.8F, 1.05F), One };
+                  private static readonly AnimationCurve
+                        _anticipate = new(Zero, new(0.3F, -0.3F), One),
+                        _pop = new(Zero, new(0.6F, 0.05F, 0.25F, 0.75F), new(0.85F, 0.9F, 1.25F, 1.25F), One),
+                        _punch = new(Zero, new(0.1F, 1F), new(0.25F, -0.6F), new(0.5F, 0.4F), new(0.7F, -0.2F), Exit),
+                        _shake = new(Zero, new(0.1F, 0.5F), new(0.2F, -0.5F), new(0.3F, 0.4F), new(0.4F, -0.4F), new(0.5F, 0.3F), new(0.6F, -0.3F), new(0.7F, 0.2F), new(0.8F, -0.2F), new(0.9F, 0.1F), Exit),
+                        _snappy = new(Zero, new(0.3F, 1.05F, 0.75F, 0.75F), new(0.6F, 0.95F), One),
+                        _spring = new(Zero, new(0.3F, 1.3F), new(0.6F, 0.8F), new(0.8F, 1.05F), One);
 
-                  public static AnimationCurve Anticipate => new(anticipateKeys);
-                  public static AnimationCurve Pop => new(popKeys);
-                  public static AnimationCurve Punch => new(punchKeys);
-                  public static AnimationCurve Shake => new(shakeKeys);
-                  public static AnimationCurve Snappy => new(snappyKeys);
-                  public static AnimationCurve Spring => new(springKeys);
+                  public static AnimationCurve Anticipate => _anticipate;
+                  public static AnimationCurve Pop => _pop;
+                  public static AnimationCurve Punch => _punch;
+                  public static AnimationCurve Shake => _shake;
+                  public static AnimationCurve Snappy => _snappy;
+                  public static AnimationCurve Spring => _spring;
             }
       }
 }
