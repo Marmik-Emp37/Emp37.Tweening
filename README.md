@@ -1,9 +1,10 @@
-## About
+# About
 A fast, composable tweening framework for Unity with clean architecture and zero-allocation at runtime.
 
-**Version: 2.1.0**
+> **Version: 2.1.0**
 
-## Features
+
+# Features
 + Allocation free during updates - pooled tweens minimize GC while running.  
 + Type safe tweening - supports any type (struct or class) with custom interpolation.
 + Fluent API - chain calls to build complex tweens concisely.
@@ -14,12 +15,14 @@ A fast, composable tweening framework for Unity with clean architecture and zero
 + Safe callbacks - all actions wrapped with exception handling.
 + Compatible with Enter Play Mode options.
 
-## Installation
+
+# Installation
 Clone or download this repository and copy the **`Emp37.Tweening`** folder into your project.
 
 **Requirements:** Unity 2021.3 LTS or newer.
 
-## Quick Start
+
+# Quick Start
 ```csharp
 using Emp37.Tweening;
 
@@ -39,8 +42,9 @@ transform.TweenScale(Vector3.one * 2F, 1F)
       .WithTag("UI");
 ```
 
-## Core Concepts
-### Lazy Execution
+
+# Core Concepts
+## Lazy Execution
 > [!IMPORTANT]
 > Tweens are **lazy** - they’re configured first and only start when played.
 
@@ -58,7 +62,8 @@ tween.WithTag("UI-Intro");
 // or chain .Play() for immediate execution
 transform.TweenMove(target, 2F).setEase(Ease.Type.OutBack).Play();
 ```
-### Element Types
+
+## Element Types
 Every tween is based on the `ITween` interface, which defines the lifecycle shared by all tween types.
 ```
 IElement
@@ -69,7 +74,7 @@ IElement
 └── Callback // callback execution
 ```
 ---
-#### Value\<T> → Interpolates any struct value between a and b over time
+### Value\<T> → Interpolates any struct value between a and b over time
 ```csharp
 // built-in types (float, Vector3, Color, etc.)
 Tween.Value(light, () => light.intensity, 2F, 0.5F, v => light.intensity = v)
@@ -105,7 +110,7 @@ transform.TweenRotateX(20F, 1F).setLoop(2, LoopType.Restart).Snap(5F).Play();
 | **onConclude(Action)**                                      | Called when tween concludes (completed or killed)               |
 | **Pause() / Resume() / Kill()**                             | Lifecycle controls                                              |
 ---
-#### Sequence → Executes tweens sequentially
+### Sequence → Executes tweens sequentially
 ```csharp
 // constructor syntax
 // onboarding tooltip: fade in panel, slide text, then play sound
@@ -127,8 +132,8 @@ Tween.Sequence()
 // barrel explosion sequence: wait, flash red, explode
 Tween.Delay(0.5F).Then(transform.TweenColor(Color.red, 0.2F)).Then(Tween.Callback(barrel.Explode)).Play();
 ```
----------------
-#### Parallel → Runs tweens simultaneously
+---
+### Parallel → Runs tweens simultaneously
 ```csharp
 // UI reveal: fade in panel, slide title, and play sound all at once
 Tween.Parallel(
@@ -137,8 +142,8 @@ Tween.Parallel(
     Tween.Callback(() => audio.PlayOneShot(pop))
 ).Play();
 ```
----------------
-#### Delay → Waits for time or a condition
+---
+### Delay → Waits for time or a condition
 ```csharp
 // time-based
 Tween.Delay(2F);
@@ -149,8 +154,8 @@ Tween.Delay(() => Input.anyKeyDown);
 // combined
 Tween.Delay(1F, () => Input.GetKeyDown(KeyCode.Space));
 ```
----------------
-#### Callback → Executes an action inline within a tween chain
+---
+### Callback → Executes an action inline within a tween chain
 ```csharp
 Tween.Sequence(
       explosive.TweenScale(Vector3.zero, 0.3F)).Append(
@@ -161,7 +166,8 @@ Tween.Sequence(
       })
 ).Play();
 ```
-### Easing & Animation
+
+## Easing & Animation
 Use from built-in presets, expressive curve types, or provide your own AnimationCurve.
 ```csharp
 // built-in easing Types
@@ -171,56 +177,25 @@ Linear, Sine, Cubic, Quint, Circ, Elastic, Quad, Quart, Expo, Back, Bounce
 Anticipate, Pop, Punch, Shake, Snappy, Spring
 ```
 Each easing type also supports directional variants:
-+ **In** → starts slowly, speeds up.
-+ **Out** → starts quickly, slows down.
-+ **InOut** → combines both (ease-in then ease-out).
-
-## Advanced Features
-### Snapping
-Snap tweens to fixed increments for deterministic motion or stylized effects. 
-Useful for grid-based movement, pixel-perfect UI, or stepped animations.
-```csharp
-// pixel-perfect movement
-element.TweenMove(target, 0.5F).Snap(1F).Play();
-
-// integer counter (no decimals)
-scoreText.TweenNumber(100, 2F, "0", relative: true).Snap(1F).setEase(Ease.Type.OutExpo).Play();
-
-// per-axis snapping as x = 1, y = 0.5, z = 0.25
-transform.TweenMove(target, 2F).Snap(new Vector3(1F, 0.5F, 0.25F)).setEase(Ease.Type.OutQuad).Play();
-```
-
-### Relative Tweens
-Most extension methods support relative tweening, allowing values to be applied as offsets from the current state rather than absolute targets.
-```csharp
-transform.TweenMoveY(2F, 1F, relative: true).Play();
-
-// grow by 50% from current scale
-transform.TweenScale(transform.localScale * 0.5F, 1F, relative: true).setEase(Ease.Curves.Pop).Play();
-```
-
-### Value Modifiers
-Value tweens can be extended with modifiers, which transform the interpolated value before it is applied.
-
-Modifiers are composable and executed in the order they are added.
-```csharp
-tween
-    .addModifier(value => Mathf.Abs(value)) // always keep positive
-    .addModifier(value => Mathf.Clamp(value, minVal, maxVal)); // clamp to bounds
-```
++ **In** → starts slowly, speeds up
++ **Out** → starts quickly, slows down
++ **InOut** → combines both (ease-in then ease-out)
 
 ## Lifecycle Control
+- Tweens automatically remove themselves when complete or killed.
+- The Factory dynamically expands internal capacity if you exceed the default limit.
+- Destroyed Unity objects auto-kill their tweens. No null checks needed. 
+
 ### Individual Tween
 ```csharp
 var tween = transform.TweenScale(Vector3.one * 2F, 1F);
 
 // control execution
-tween.Play();          // start the tween
-tween.Pause();         // pause it in place
-tween.Resume();        // continue from where it paused
-tween.Kill();          // stop immediately and mark as None
+tween.Play();   // start the tween
+tween.Pause();  // pause it in place
+tween.Resume(); // continue from where it paused
+tween.Kill();   // stop immediately and mark as None
 ```
-
 ### Global
 Use the `Factory` to affect all active tweens across the game.
 ```csharp
@@ -240,13 +215,43 @@ Factory.Resume("Player");
 Factory.Kill("Enemy");
 ```
 
-### Configuration
-- Tweens automatically remove themselves when complete or killed.
-- The Factory dynamically expands internal capacity if you exceed the default limit.
-- Destroyed Unity objects auto-kill their tweens. No null checks needed.
 
-## Debugging
-### Tween Debugger Window
+# Advanced Features
+## Snapping
+Snap tweens to fixed increments for deterministic motion or stylized effects. 
+Useful for grid-based movement, pixel-perfect UI, or stepped animations.
+```csharp
+// pixel-perfect movement
+element.TweenMove(target, 0.5F).Snap(1F).Play();
+
+// integer counter (no decimals)
+scoreText.TweenNumber(100, 2F, "0", relative: true).Snap(1F).setEase(Ease.Type.OutExpo).Play();
+
+// per-axis snapping as x = 1, y = 0.5, z = 0.25
+transform.TweenMove(target, 2F).Snap(new Vector3(1F, 0.5F, 0.25F)).setEase(Ease.Type.OutQuad).Play();
+```
+
+## Relative Tweens
+Most extension methods support relative tweening, allowing values to be applied as offsets from the current state rather than absolute targets.
+```csharp
+transform.TweenMoveY(2F, 1F, relative: true).Play();
+
+// grow by 50% from current scale
+transform.TweenScale(transform.localScale * 0.5F, 1F, relative: true).setEase(Ease.Curves.Pop).Play();
+```
+
+## Value Modifiers
+Value tweens can be extended with modifiers, which transform the interpolated value before it is applied.<br>
+Modifiers are composable and executed in the order they are added.
+```csharp
+tween
+    .addModifier(value => Mathf.Abs(value)) // always keep positive
+    .addModifier(value => Mathf.Clamp(value, minVal, maxVal)); // clamp to bounds
+```
+
+
+# Debugging
+## Tween Debugger Window
 Open **Tools > Emp37 > Tweening.Debugger** to monitor all active tweens in real-time.
 
 **Features:**
@@ -267,7 +272,7 @@ transform.TweenMove(target, 2F).Play().WithTag("Player");
 ```
 Then search "Player" in debugger to filter tags.
 
-### Logging
+## Logging
 ```csharp
 // selective logging
 Log.Info("Tween system initialized");
@@ -276,14 +281,27 @@ Log.Error("Failed to create tween");
 
 Log.Enabled = false; // disable all logs
 ```
-  
-## Tips
+
+
+# Tips
 - Ensure you're calling `.Play()`.
 - Tweens capture initial values on **Play**, not when created.
 - Avoid multiple active tweens modifying the same property.
-- Use tags to group and control tweens (pause old ones before starting new ones).
-- Use `setRecyclable(bool)` to control pooling in Value tweens (true by default).
-- Delay, Callback, Parallel, and Sequence can nest arbitrarily.
+- Group related tweens with `.WithTag()` to pause/resume/kill them together.
+- If you store a tween reference and `setRecyclable(true)` (default), you **must** nullify the reference in `.onConclude()` to avoid using a recycled instance:
+```csharp
+// ❌ WRONG - tween reference may be reused by pool
+ITween myTween = transform.TweenMoveX(5F, 1F).Play();
 
-## License
-MIT License - see [LICENSE](LICENSE) for details.
+// later: myTween.Pause(); may affect a different tween
+  
+// ✅ CORRECT - nullify on conclude
+myTween.onConclude(() => myTween = null);
+
+// OR disable recycling if you need persistent reference
+myTween.setRecyclable(false);
+```
+- Tweens automatically clean up when their linked Unity object is destroyed. No manual `.Kill()` needed.
+- The Factory starts with capacity for 128 tweens and auto-expands with a warning. Monitor debugger to detect leaks.
+- Set `Log.Enabled = false` in production to eliminate debug overhead.
+- Delay, Callback, Parallel, and Sequence can nest arbitrarily for complex choreography.
