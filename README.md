@@ -171,9 +171,9 @@ Linear, Sine, Cubic, Quint, Circ, Elastic, Quad, Quart, Expo, Back, Bounce
 Anticipate, Pop, Punch, Shake, Snappy, Spring
 ```
 Each easing type also supports directional variants:
-+ **In** → starts slowly, speeds up.
-+ **Out** → starts quickly, slows down.
-+ **InOut** → combines both (ease-in then ease-out).
++ **In** → starts slowly, speeds up
++ **Out** → starts quickly, slows down
++ **InOut** → combines both (ease-in then ease-out)
 
 ## Advanced Features
 ### Snapping
@@ -215,10 +215,10 @@ tween
 var tween = transform.TweenScale(Vector3.one * 2F, 1F);
 
 // control execution
-tween.Play();          // start the tween
-tween.Pause();         // pause it in place
-tween.Resume();        // continue from where it paused
-tween.Kill();          // stop immediately and mark as None
+tween.Play();   // start the tween
+tween.Pause();  // pause it in place
+tween.Resume(); // continue from where it paused
+tween.Kill();   // stop immediately and mark as None
 ```
 
 ### Global
@@ -281,9 +281,24 @@ Log.Enabled = false; // disable all logs
 - Ensure you're calling `.Play()`.
 - Tweens capture initial values on **Play**, not when created.
 - Avoid multiple active tweens modifying the same property.
-- Use tags to group and control tweens (pause old ones before starting new ones).
-- Use `setRecyclable(bool)` to control pooling in Value tweens (true by default).
-- Delay, Callback, Parallel, and Sequence can nest arbitrarily.
+- Group related tweens with `.WithTag()` to pause/resume/kill them together.
+- If you store a tween reference and `setRecyclable(true)` (default), you **must** nullify the reference in `.onConclude()` to avoid using a recycled instance:
+```csharp
+// ❌ WRONG - tween reference may be reused by pool
+ITween myTween = transform.TweenMoveX(5F, 1F).Play();
+
+// later: myTween.Pause(); may affect a different tween
+  
+// ✅ CORRECT - nullify on conclude
+myTween.onConclude(() => myTween = null);
+
+// OR disable recycling if you need persistent reference
+myTween.setRecyclable(false);
+```
+- Tweens automatically clean up when their linked Unity object is destroyed. No manual `.Kill()` needed.
+- The Factory starts with capacity for 128 tweens and auto-expands with a warning. Monitor debugger to detect leaks.
+- Set `Log.Enabled = false` in production to eliminate debug overhead.
+- Delay, Callback, Parallel, and Sequence can nest arbitrarily for complex choreography.
 
 ## License
 MIT License - see [LICENSE](LICENSE) for details.
