@@ -42,7 +42,7 @@ transform.TweenScale(Vector3.one * 2F, 1F)
 ## Core Concepts
 ### Lazy Execution
 > [!IMPORTANT]
-> weens are **lazy** - they’re configured first and only start when played.
+> Tweens are **lazy** - they’re configured first and only start when played.
 
 ```csharp
 // configure tween
@@ -59,14 +59,14 @@ tween.WithTag("UI-Intro");
 transform.TweenMove(target, 2F).setEase(Ease.Type.OutBack).Play();
 ```
 ### Element Types
-Every tween is based on the `IElement` interface, which defines the lifecycle shared by all tween types.
+Every tween is based on the `ITween` interface, which defines the lifecycle shared by all tween types.
 ```
 IElement
 ├── Value<T> // concrete tweening
 ├── Sequence // sequential composition
 ├── Parallel // concurrent composition
 ├── Delay    // timing control
-└── Invoke   // callback execution
+└── Callback // callback execution
 ```
 ---
 #### Value\<T> → Interpolates any struct value between a and b over time
@@ -112,7 +112,7 @@ transform.TweenRotateX(20F, 1F).setLoop(2, LoopType.Restart).Snap(5F).Play();
 Tween.Sequence(
       tooltipBackground.TweenFade(1F, 0.3F),
       tooltipText.TweenMoveY(tooltipText.transform.localPosition.y + 50F, 0.4F).setEase(Ease.Type.OutCubic),
-      Tween.Invoke(() => audioSource.PlayOneShot(popupClip))
+      Tween.Callback(() => audioSource.PlayOneShot(popupClip))
 ).Play();
 
 // fluent builder syntax
@@ -125,7 +125,7 @@ Tween.Sequence()
 
 // then-chaining syntax
 // barrel explosion sequence: wait, flash red, explode
-Tween.Delay(0.5F).Then(transform.TweenColor(Color.red, 0.2F)).Then(Tween.Invoke(barrel.Explode)).Play();
+Tween.Delay(0.5F).Then(transform.TweenColor(Color.red, 0.2F)).Then(Tween.Callback(barrel.Explode)).Play();
 ```
 ---------------
 #### Parallel → Runs tweens simultaneously
@@ -134,7 +134,7 @@ Tween.Delay(0.5F).Then(transform.TweenColor(Color.red, 0.2F)).Then(Tween.Invoke(
 Tween.Parallel(
     image.TweenFade(1F, 0.3F),
     text.TweenScale(Vector3.one, 0.4F, relative: true).setEase(Ease.Type.OutCubic),
-    Tween.Invoke(() => audio.PlayOneShot(pop))
+    Tween.Callback(() => audio.PlayOneShot(pop))
 ).Play();
 ```
 ---------------
@@ -150,11 +150,11 @@ Tween.Delay(() => Input.anyKeyDown);
 Tween.Delay(1F, () => Input.GetKeyDown(KeyCode.Space));
 ```
 ---------------
-#### Invoke → Executes an action inline within a tween chain
+#### Callback → Executes an action inline within a tween chain
 ```csharp
 Tween.Sequence(
       explosive.TweenScale(Vector3.zero, 0.3F)).Append(
-      Tween.Invoke(() =>
+      Tween.Callback(() =>
       {
           Instantiate(explosionPrefab, explosive.position, Quaternion.identity);
           Destroy(explosive.gameObject);
@@ -175,20 +175,28 @@ Each easing type also supports directional variants:
 + **Out** → starts quickly, slows down.
 + **InOut** → combines both (ease-in then ease-out).
 
-## Advances Features
+## Advanced Features
 ### Snapping
 Snap tweens to fixed increments for deterministic motion or stylized effects. 
 Useful for grid-based movement, pixel-perfect UI, or stepped animations.
 ```csharp
-floatingTween.Snap(0.5F);         // snap float values in 0.5 increments
-vectorTween.Snap(new(0.25F, 1F)); // snap Vector2: 0.25 on X, 1.0 on Y
+// pixel-perfect movement
+element.TweenMove(target, 0.5F).Snap(1F).Play();
+
+// integer counter (no decimals)
+scoreText.TweenNumber(100, 2F, "0", relative: true).Snap(1F).setEase(Ease.Type.OutExpo).Play();
+
+// per-axis snapping as x = 1, y = 0.5, z = 0.25
+transform.TweenMove(target, 2F).Snap(new Vector3(1F, 0.5F, 0.25F)).setEase(Ease.Type.OutQuad).Play();
 ```
 
 ### Relative Tweens
-Most extension methods support relative tweening, allowing values to be applied as offsets from the initial state rather than absolute targets.
-This is ideal for reusable animations that should adapt to the object’s current position, scale, or rotation.
+Most extension methods support relative tweening, allowing values to be applied as offsets from the current state rather than absolute targets.
 ```csharp
 transform.TweenMoveY(2F, 1F, relative: true).Play();
+
+// grow by 50% from current scale
+transform.TweenScale(transform.localScale * 0.5F, 1F, relative: true).setEase(Ease.Curves.Pop).Play();
 ```
 
 ### Value Modifiers
@@ -197,8 +205,8 @@ Value tweens can be extended with modifiers, which transform the interpolated va
 Modifiers are composable and executed in the order they are added.
 ```csharp
 tween
-    .addModifier(value => Mathf.Abs(value))
-    .addModifier(value => value > 1F ? value * 0.5F : value);
+    .addModifier(value => Mathf.Abs(value)) // always keep positive
+    .addModifier(value => Mathf.Clamp(value, minVal, maxVal)); // clamp to bounds
 ```
 
 ## Lifecycle Control
@@ -268,7 +276,6 @@ Log.Error("Failed to create tween");
 
 Log.Enabled = false; // disable all logs
 ```
-
   
 ## Tips
 - Ensure you're calling `.Play()`.
@@ -276,7 +283,7 @@ Log.Enabled = false; // disable all logs
 - Avoid multiple active tweens modifying the same property.
 - Use tags to group and control tweens (pause old ones before starting new ones).
 - Use `setRecyclable(bool)` to control pooling in Value tweens (true by default).
-- Delay, Invoke, Parallel, and Sequence can nest arbitrarily.
+- Delay, Callback, Parallel, and Sequence can nest arbitrarily.
 
 ## License
 MIT License - see [LICENSE](LICENSE) for details.

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 using UnityEngine;
 using UnityEngine.Pool;
@@ -53,8 +52,7 @@ namespace Emp37.Tweening
 
             private T a, b;
             private Delta timeMode;
-            private float inverseDuration;
-            private float progress, delay;
+            private float inverseDuration, progress, delay;
             private bool bootstrapped;
 
             private Action initTween;
@@ -63,7 +61,7 @@ namespace Emp37.Tweening
             private Modifier modifier;
             private Evaluator evaluate;
 
-            private UObject linkedTarget; // used to auto-kill tween if this object is destroyed
+            private UObject linkedTarget;
 
             private LoopType loopType;
             private int remainingLoops;

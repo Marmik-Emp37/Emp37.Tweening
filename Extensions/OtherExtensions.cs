@@ -4,7 +4,7 @@ namespace Emp37.Tweening
 {
       using static Tween;
 
-      internal static class OtherExtensions
+      public static class OtherExtensions
       {
             // M A T E R I A L
             public static Value<Color> TweenColor(this Material material, Color target, float duration) => Value(material, () => material.color, target, duration, value => material.color = value);
