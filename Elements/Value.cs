@@ -24,7 +24,7 @@ namespace Emp37.Tweening
                   public override Value<T> setEase(Method _) => this;
                   public override Value<T> setLoop(int _, LoopType __, float ___) => this;
                   public override Value<T> setProgress(float _) => this;
-                  public override Value<T> setTarget(T _) => this;
+                  public override Value<T> setTarget(T _, bool __) => this;
                   public override Value<T> setTimeMode(Delta _) => this;
                   public override Value<T> onStart(Action _) => this;
                   public override Value<T> onUpdate(Action<float> _) => this;
@@ -50,7 +50,7 @@ namespace Emp37.Tweening
             private static readonly ObjectPool<Value<T>> pool = new(() => new Value<T>(), actionOnGet: v => v.OnGet(), actionOnRelease: v => v.OnRelease(), collectionCheck: true, defaultCapacity: 64);
             private bool isRecyclable;
 
-            private T a, b;
+            private T a, b, current;
             private Delta timeMode;
             private float inverseDuration, progress, delay;
             private bool bootstrapped;
@@ -152,8 +152,7 @@ namespace Emp37.Tweening
                   if (!bootstrapped)
                   {
                         bootstrapped = true;
-                        try { initTween(); }
-                        catch (Exception ex) { HandleException(ex); return; }
+                        try { initTween(); } catch (Exception ex) { HandleException(ex); return; }
                         Utils.SafeInvoke(actionOnStart);
                   }
 
@@ -163,11 +162,9 @@ namespace Emp37.Tweening
                   T value = evaluate(a, b, easedRatio);
                   if (modifier != null)
                   {
-                        try { value = modifier(value); }
-                        catch (Exception ex) { Log.Error($"Modifier exception: {ex.Message}"); }
+                        try { value = modifier(value); } catch (Exception ex) { Log.Error($"Modifier exception: {ex.Message}"); }
                   }
-                  try { easeTween(value); }
-                  catch (Exception ex) { HandleException(ex); return; }
+                  try { easeTween(current = value); } catch (Exception ex) { HandleException(ex); return; }
 
                   Utils.SafeInvoke(actionOnUpdate, easedRatio);
 
@@ -233,7 +230,7 @@ namespace Emp37.Tweening
             public virtual Value<T> setEase(AnimationCurve curve) { if (!IsDestroyed) easingMethod = curve.Evaluate; return this; }
             public virtual Value<T> setLoop(int cycles, LoopType type, float delay = 0F) { remainingLoops = (cycles <= 0) ? -1 : cycles; loopType = type; loopInterval = Mathf.Max(0F, delay); return this; }
             public virtual Value<T> setProgress(float normalizedValue) { progress = Mathf.Clamp01(normalizedValue); return this; }
-            public virtual Value<T> setTarget(T value) { b = value; return this; }
+            public virtual Value<T> setTarget(T value, bool rebaseStart = false) { if (rebaseStart) a = current; b = value; return this; }
             public virtual Value<T> setTimeMode(Delta mode) { timeMode = mode; return this; }
 
             public virtual Value<T> onStart(Action action) { if (!IsDestroyed) actionOnStart = action; return this; }
@@ -249,7 +246,7 @@ namespace Emp37.Tweening
             {
                   Phase = Phase.None;
                   isRecyclable = true;
-                  a = b = default;
+                  a = b = current = default;
                   timeMode = Delta.Scaled;
                   inverseDuration = 0F;
                   progress = 0F;
@@ -299,6 +296,7 @@ namespace Emp37.Tweening
                   {
                         value.a = initialization();
                         value.b = target();
+                        value.current = value.a;
                   };
                   value.inverseDuration = 1F / duration;
                   value.easeTween = update;
