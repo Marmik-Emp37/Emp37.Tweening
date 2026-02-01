@@ -16,6 +16,7 @@ namespace Emp37.Tweening
 
             void ITween.Init()
             {
+                  if (Phase is Phase.Finished) return;
                   Phase = Phase.Active;
             }
             void ITween.Update()
@@ -35,6 +36,10 @@ namespace Emp37.Tweening
             public void Kill()
             {
                   Phase = Phase.None;
+            }
+            public void Reset()
+            {
+
             }
       }
 }

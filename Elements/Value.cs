@@ -35,6 +35,7 @@ namespace Emp37.Tweening
                   public override void Pause() { }
                   public override void Resume() { }
                   public override void Kill() { }
+                  public override void Reset() { }
 
                   public override string ToString() => $"{nameof(Value<T>)}<{typeof(T).Name}>.{nameof(Blank)}";
             }
@@ -48,7 +49,6 @@ namespace Emp37.Tweening
 
 
             private static readonly ObjectPool<Value<T>> pool = new(() => new Value<T>(), actionOnGet: v => v.OnGet(), actionOnRelease: v => v.OnRelease(), collectionCheck: true, defaultCapacity: 64);
-            private bool isRecyclable;
 
             private T a, b, current;
             private Delta timeMode;
@@ -106,6 +106,7 @@ namespace Emp37.Tweening
                   { Type.InOutBounce, InOutBounce }
             };
 
+            public bool Recyclable { get; set; }
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => ReferenceEquals(this, Empty) || IsDestroyed;
@@ -130,7 +131,9 @@ namespace Emp37.Tweening
 
             void ITween.Init()
             {
-                  if (!IsDestroyed) Phase = Phase.Active;
+                  if (Phase is Phase.Finished || IsDestroyed) return;
+
+                  Phase = Phase.Active;
             }
             void ITween.Update()
             {
@@ -203,11 +206,15 @@ namespace Emp37.Tweening
 
                   Conclude();
             }
+            public virtual void Reset()
+            {
+                  progress = 0F;
+            }
 
             private void Conclude()
             {
                   Utils.SafeInvoke(actionOnConclude);
-                  if (isRecyclable)
+                  if (Recyclable)
                   {
                         pool.Release(this);
                   }
@@ -223,7 +230,7 @@ namespace Emp37.Tweening
 #pragma warning disable IDE1006 // naming styles
             public virtual Value<T> addModifier(Modifier method) { if (!IsDestroyed && method != null) modifier = modifier == null ? method : (value => method(modifier(value))); return this; }
             public virtual Value<T> disableLoop() { loopType = LoopType.None; remainingLoops = 0; return this; }
-            public virtual Value<T> setRecyclable(bool value) { isRecyclable = value; return this; }
+            public virtual Value<T> setRecyclable(bool value) { Recyclable = value; return this; }
             public virtual Value<T> setDelay(float seconds) { delay = seconds; return this; }
             public virtual Value<T> setEase(Type type) { if (!IsDestroyed) easingMethod = easeTypeMap[type]; return this; }
             public virtual Value<T> setEase(Method method) { if (!IsDestroyed) easingMethod = method; return this; }
@@ -245,7 +252,7 @@ namespace Emp37.Tweening
             private void OnGet()
             {
                   Phase = Phase.None;
-                  isRecyclable = true;
+                  Recyclable = true;
                   a = b = current = default;
                   timeMode = Delta.Scaled;
                   inverseDuration = 0F;

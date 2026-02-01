@@ -4,11 +4,11 @@ namespace Emp37.Tweening
 {
       public sealed class Parallel : ITween
       {
-            private readonly List<ITween> tweens;
+            private readonly List<ITween> all, tweens;
 
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
-            public bool IsEmpty => tweens.Count == 0;
+            public bool IsEmpty => all.Count == 0;
             public Info Info
             {
                   get
@@ -34,16 +34,23 @@ namespace Emp37.Tweening
 
             internal Parallel(IEnumerable<ITween> tweens)
             {
+                  all = new();
                   this.tweens = new();
+
                   foreach (ITween tween in tweens)
-                        if (tween != null && !tween.IsEmpty) this.tweens.Add(tween);
+                        if (tween != null && !tween.IsEmpty) all.Add(tween);
             }
 
             void ITween.Init()
             {
-                  for (int i = 0, count = tweens.Count; i < count; i++)
+                  if (Phase is Phase.Finished) return;
+
+                  tweens.Clear();
+                  for (int i = 0, count = all.Count; i < count; i++)
                   {
-                        tweens[i].Init();
+                        ITween tween = all[i];
+                        tween.Init();
+                        tweens.Add(tween);
                   }
                   Phase = Phase.Active;
             }
@@ -90,6 +97,14 @@ namespace Emp37.Tweening
                   }
                   tweens.Clear();
                   Phase = Phase.None;
+            }
+            public void Reset()
+            {
+                  for (int i = 0, count = all.Count; i < count; i++)
+                  {
+                        all[i].Reset();
+                  }
+                  tweens.Clear();
             }
       }
 }

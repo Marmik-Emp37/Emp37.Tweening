@@ -41,10 +41,6 @@ namespace Emp37.Tweening
                   InOutBounce,
             }
 
-
-            public delegate float Method(float t);
-
-
             // penner's Easing Notations
             public const float S = 1.70158F; // default overshoot for Back easing
             public const float C2 = S * 1.525F; // adjusted overshoot for smoother InOutBack transition
@@ -53,6 +49,9 @@ namespace Emp37.Tweening
             public const float C5 = 2F * PI / 4.5F; // angular frequency for InOutElastic (higher value creates faster oscillation)
             public const float N1 = 7.5625F; // bounce scaling factor (controls bounce height and shape)
             public const float D1 = 2.75F; // bounce phase division (segments the bounce into time intervals for OutBounce).
+
+
+            public delegate float Method(float t);
 
             public static float Linear(float t) => t;
             public static float InSine(float t) => 1F - Cos(t * PI * 0.5F);
@@ -162,13 +161,12 @@ namespace Emp37.Tweening
             {
                   private static readonly Keyframe Zero = new(0F, 0F), One = new(1F, 1F), Exit = new(1F, 0F);
 
-                  private static readonly AnimationCurve
-                        _anticipate = new(Zero, new(0.3F, -0.3F), One),
-                        _pop = new(Zero, new(0.6F, 0.05F, 0.25F, 0.75F), new(0.85F, 0.9F, 1.25F, 1.25F), One),
-                        _punch = new(Zero, new(0.1F, 1F), new(0.25F, -0.6F), new(0.5F, 0.4F), new(0.7F, -0.2F), Exit),
-                        _shake = new(Zero, new(0.1F, 0.5F), new(0.2F, -0.5F), new(0.3F, 0.4F), new(0.4F, -0.4F), new(0.5F, 0.3F), new(0.6F, -0.3F), new(0.7F, 0.2F), new(0.8F, -0.2F), new(0.9F, 0.1F), Exit),
-                        _snappy = new(Zero, new(0.3F, 1.05F, 0.75F, 0.75F), new(0.6F, 0.95F), One),
-                        _spring = new(Zero, new(0.3F, 1.3F), new(0.6F, 0.8F), new(0.8F, 1.05F), One);
+                  private static readonly AnimationCurve _anticipate = new(Zero, new(0.3F, -0.3F), One);
+                  private static readonly AnimationCurve _pop = new(Zero, new(0.6F, 0.05F, 0.25F, 0.75F), new(0.85F, 0.9F, 1.25F, 1.25F), One);
+                  private static readonly AnimationCurve _punch = new(Zero, new(0.1F, 1F), new(0.25F, -0.6F), new(0.5F, 0.4F), new(0.7F, -0.2F), Exit);
+                  private static readonly AnimationCurve _shake = new(Zero, new(0.1F, 0.5F), new(0.2F, -0.5F), new(0.3F, 0.4F), new(0.4F, -0.4F), new(0.5F, 0.3F), new(0.6F, -0.3F), new(0.7F, 0.2F), new(0.8F, -0.2F), new(0.9F, 0.1F), Exit);
+                  private static readonly AnimationCurve _snappy = new(Zero, new(0.3F, 1.05F, 0.75F, 0.75F), new(0.6F, 0.95F), One);
+                  private static readonly AnimationCurve _spring = new(Zero, new(0.3F, 1.3F), new(0.6F, 0.8F), new(0.8F, 1.05F), One);
 
                   public static AnimationCurve Anticipate => _anticipate;
                   public static AnimationCurve Pop => _pop;

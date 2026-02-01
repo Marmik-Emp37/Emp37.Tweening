@@ -13,5 +13,6 @@ namespace Emp37.Tweening
             public void Pause();
             public void Resume();
             public void Kill();
+            public void Reset();
       }
 }

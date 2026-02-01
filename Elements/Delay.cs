@@ -23,6 +23,8 @@ namespace Emp37.Tweening
 
             void ITween.Init()
             {
+                  if (Phase is Phase.Finished) return;
+
                   remainingTime = originalTime;
                   Phase = Phase.Active;
             }
@@ -34,10 +36,10 @@ namespace Emp37.Tweening
                         remainingTime = Mathf.Max(0F, remainingTime - delta);
                   }
                   else
-                  if (predicate == null || predicate())
-                  {
-                        Phase = Phase.Finished;
-                  }
+                        if (predicate == null || predicate())
+                        {
+                              Phase = Phase.Finished;
+                        }
             }
 
             public void Pause()
@@ -51,6 +53,10 @@ namespace Emp37.Tweening
             public void Kill()
             {
                   Phase = Phase.None;
+            }
+            public void Reset()
+            {
+                  remainingTime = 0F;
             }
       }
 }
