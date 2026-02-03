@@ -1,111 +1,131 @@
-using System.Collections.Generic;
+//using System.Collections.Generic;
 
-namespace Emp37.Tweening
-{
-      public sealed class Sequence : ITween
-      {
-            private readonly List<ITween> all;
-            private int index;
-            private ITween current;
-            private int total;
+//namespace Emp37.Tweening
+//{
+//      public sealed class Sequence : Tween
+//      {
+//            private readonly List<Tween> steps = new(16);
 
-            public string Tag { get; set; }
-            public Phase Phase { get; private set; }
-            public bool IsEmpty => all.Count == 0;
-            public Info Info
-            {
-                  get
-                  {
-                        if (total == 0) return new Info(nameof(Sequence), 1F);
+//            private int index;
+//            private bool bootstrapped;
 
-                        int completed = index;
-                        float currentRatio = current != null ? current.Info.Ratio : 0F, ratio = (completed + currentRatio) / total;
+//            public override bool IsEmpty => steps.Count == 0 || IsDestroyed;
 
-                        return new Info(
-                              nameof(Sequence),
-                              ratio,
-                              new("Current", current == null ? "null" : current.Info.Title),
-                              new("Pending", total - index - (current != null ? 1 : 0)));
-                  }
-            }
+//            public Sequence Add(Tween tween)
+//            {
+//                  if (tween != null && !tween.IsEmpty) steps.Add(tween);
+//                  return this;
+//            }
 
+//            internal override void Init()
+//            {
+//                  initialLoopSettings = loopSettings;
+//                  index = 0;
+//                  direction = 1;
+//                  bootstrapped = false;
+//                  for (int i = 0; i < steps.Count; i++) steps[i].Init();
+//                  Phase = State.Active;
+//            }
+//            internal override void Update()
+//            {
+//                  if (IsDestroyed)
+//                  {
+//                        Kill();
+//                        return;
+//                  }
+//                  if (!bootstrapped)
+//                  {
+//                        bootstrapped = true;
+//                        TryInvoke(actionOnStart);
+//                  }
+//                  if (steps.Count == 0)
+//                  {
+//                        Conclude();
+//                        return;
+//                  }
+//                  // Bounds check (in case of yoyo direction flips)
+//                  if (index < 0) index = 0;
+//                  if (index >= steps.Count) index = steps.Count - 1;
 
-            internal Sequence() => all = new();
-            internal Sequence(IEnumerable<ITween> tweens) : this() => Append(tweens);
+//                  Tween current = steps[index];
+//                  if (current.Phase == State.Paused)
+//                  {
+//                        return;
+//                  }
+//                  if (current.Phase == State.None)
+//                  {
+//                        MoveNext();
+//                        return;
+//                  }
+//                  if (current.Phase == State.Finished)
+//                  {
+//                        MoveNext();
+//                        return;
+//                  }
+//                  if (current.Phase != State.Active) current.Resume();
 
-            public Sequence Append(ITween tween)
-            {
-                  if (tween == null || tween.IsEmpty) return this;
+//                  current.Update();
+//            }
 
-                  all.Add(tween);
-                  return this;
-            }
-            public Sequence Append(IEnumerable<ITween> tweens)
-            {
-                  if (tweens == null) return this;
-                  foreach (ITween tween in tweens) Append(tween);
-                  return this;
-            }
-            public Sequence Append(params ITween[] tweens) => Append((IEnumerable<ITween>) tweens);
+//            private void MoveNext()
+//            {
+//                  index += direction;
+//                  bool outOfRange = direction > 0 ? index >= steps.Count : index < 0;
+//                  if (!outOfRange) return;
 
-            void ITween.Init()
-            {
-                  if (all.Count == 0) Phase = Phase.Finished;
-                  if (Phase is Phase.Finished) return;
+//                  if (loopSettings.Type != LoopType.None && loopSettings.Count != 0)
+//                  {
+//                        if (loopSettings.Count > 0) loopSettings.Count--;
+//                        if (loopSettings.Type == LoopType.Yoyo) direction *= -1;
+//                        RestartChildrenForNextLoop();
+//                        index = direction > 0 ? 0 : steps.Count - 1;
+//                        return;
+//                  }
+//                  Conclude();
+//            }
 
-                  index = 0;
-                  total = all.Count;
-                  (current = all[index]).Init();
+//            private void RestartChildrenForNextLoop()
+//            {
+//                  for (int i = 0; i < steps.Count; i++) steps[i].Replay();
+//            }
+//            private void Conclude()
+//            {
+//                  Phase = State.Finished;
+//                  TryInvoke(actionOnComplete);
+//                  if ((settings & Settings.AutoKill) != 0) Kill();
+//            }
 
-                  Phase = Phase.Active;
-            }
-            void ITween.Update()
-            {
-                  if (current.Phase is Phase.Active) current.Update();
-                  if (current.Phase is not Phase.Finished and not Phase.None) return;
-
-                  index++;
-                  if (index >= total)
-                  {
-                        current = null;
-                        Phase = Phase.Finished;
-                        return;
-                  }
-                  current = all[index];
-                  current.Init();
-            }
-
-            public void Pause()
-            {
-                  if (Phase != Phase.Active) return;
-
-                  current?.Pause();
-                  Phase = Phase.Paused;
-            }
-            public void Resume()
-            {
-                  if (Phase != Phase.Paused) return;
-
-                  current?.Resume();
-                  Phase = Phase.Active;
-            }
-            public void Kill()
-            {
-                  for (int i = 0, count = all.Count; i < count; i++) all[i].Kill();
-
-                  current = null;
-                  index = 0;
-
-                  Phase = Phase.None;
-            }
-            public void Reset()
-            {
-                  for (int i = 0, count = all.Count; i < count; i++) all[i].Reset();
-
-                  current = null;
-                  index = 0;
-
-                  Phase = Phase.None;
-            }
-      }
-}
+//            internal override void Pause()
+//            {
+//                  if (Phase == State.Active)
+//                  {
+//                        Phase = State.Paused;
+//                        for (int i = 0; i < steps.Count; i++) steps[i].Pause();
+//                  }
+//            }
+//            internal override void Resume()
+//            {
+//                  if (Phase == State.Paused)
+//                  {
+//                        Phase = State.Active;
+//                        if (steps.Count > 0 && index >= 0 && index < steps.Count) steps[index].Resume();
+//                  }
+//            }
+//            public override void Replay()
+//            {
+//                  loopSettings = initialLoopSettings;
+//                  direction = 1;
+//                  index = 0;
+//                  bootstrapped = false;
+//                  Phase = State.Active;
+//                  for (int i = 0; i < steps.Count; i++) steps[i].Replay();
+//            }
+//            public override void Kill()
+//            {
+//                  if (Phase == State.None) return;
+//                  Phase = State.None;
+//                  for (int i = 0; i < steps.Count; i++) steps[i].Kill();
+//                  TryInvoke(actionOnKill);
+//            }
+//      }
+//}
