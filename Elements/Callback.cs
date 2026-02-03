@@ -6,23 +6,19 @@ namespace Emp37.Tweening
       {
             private readonly Action action;
 
+            bool ITween.AutoKill { get; set; } = true;
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => action == null;
             public Info Info => new(nameof(Callback), new Info.Property("Method", action?.Method?.Name ?? "null"));
 
-
             internal Callback(Action action) => this.action = action;
 
-            void ITween.Init()
-            {
-                  if (Phase is Phase.Finished) return;
-                  Phase = Phase.Active;
-            }
+
             void ITween.Update()
             {
                   Utils.SafeInvoke(action);
-                  Phase = Phase.Finished;
+                  Kill();
             }
 
             public void Pause()
@@ -39,7 +35,7 @@ namespace Emp37.Tweening
             }
             public void Reset()
             {
-
+                  Phase = Phase.Active;
             }
       }
 }

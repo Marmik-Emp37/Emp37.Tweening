@@ -8,7 +8,9 @@ namespace Emp37.Tweening
             private int index;
             private ITween current;
             private int total;
+            private bool isAutoKill = true;
 
+            bool ITween.AutoKill { get => isAutoKill; set => isAutoKill = value; }
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => all.Count == 0;
@@ -48,17 +50,6 @@ namespace Emp37.Tweening
             }
             public Sequence Append(params ITween[] tweens) => Append((IEnumerable<ITween>) tweens);
 
-            void ITween.Init()
-            {
-                  if (all.Count == 0) Phase = Phase.Finished;
-                  if (Phase is Phase.Finished) return;
-
-                  index = 0;
-                  total = all.Count;
-                  (current = all[index]).Init();
-
-                  Phase = Phase.Active;
-            }
             void ITween.Update()
             {
                   if (current.Phase is Phase.Active) current.Update();
@@ -69,10 +60,12 @@ namespace Emp37.Tweening
                   {
                         current = null;
                         Phase = Phase.Finished;
+
+                        if (isAutoKill) Kill();
                         return;
                   }
                   current = all[index];
-                  current.Init();
+                  current.Reset();
             }
 
             public void Pause()
@@ -102,10 +95,11 @@ namespace Emp37.Tweening
             {
                   for (int i = 0, count = all.Count; i < count; i++) all[i].Reset();
 
-                  current = null;
                   index = 0;
+                  total = all.Count;
+                  (current = all[index]).Reset();
 
-                  Phase = Phase.None;
+                  Phase = Phase.Active;
             }
       }
 }

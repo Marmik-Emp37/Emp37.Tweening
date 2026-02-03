@@ -2,12 +2,12 @@ namespace Emp37.Tweening
 {
       public interface ITween
       {
+            internal bool AutoKill { get; set; }
             public string Tag { get; set; }
             public Phase Phase { get; }
             public bool IsEmpty { get; }
             public Info Info { get; }
 
-            internal void Init();
             internal void Update();
 
             public void Pause();

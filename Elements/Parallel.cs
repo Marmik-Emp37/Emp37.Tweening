@@ -5,7 +5,9 @@ namespace Emp37.Tweening
       public sealed class Parallel : ITween
       {
             private readonly List<ITween> all, tweens;
+            private bool isAutoKill = true;
 
+            bool ITween.AutoKill { get => isAutoKill; set => isAutoKill = value; }
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
             public bool IsEmpty => all.Count == 0;
@@ -41,19 +43,6 @@ namespace Emp37.Tweening
                         if (tween != null && !tween.IsEmpty) all.Add(tween);
             }
 
-            void ITween.Init()
-            {
-                  if (Phase is Phase.Finished) return;
-
-                  tweens.Clear();
-                  for (int i = 0, count = all.Count; i < count; i++)
-                  {
-                        ITween tween = all[i];
-                        tween.Init();
-                        tweens.Add(tween);
-                  }
-                  Phase = Phase.Active;
-            }
             void ITween.Update()
             {
                   for (int i = tweens.Count - 1; i >= 0; i--)
@@ -67,7 +56,11 @@ namespace Emp37.Tweening
                         if (i != last) tweens[i] = tweens[last];
                         tweens.RemoveAt(last);
 
-                        if (tweens.Count == 0) Phase = Phase.Finished;
+                        if (tweens.Count == 0)
+                        {
+                              Phase = Phase.Finished;
+                              if (isAutoKill) Kill();
+                        }
                   }
             }
 
@@ -100,11 +93,14 @@ namespace Emp37.Tweening
             }
             public void Reset()
             {
+                  tweens.Clear();
                   for (int i = 0, count = all.Count; i < count; i++)
                   {
-                        all[i].Reset();
+                        ITween tween = all[i];
+                        tween.Reset();
+                        tweens.Add(tween);
                   }
-                  tweens.Clear();
+                  Phase = Phase.Active;
             }
       }
 }

@@ -54,6 +54,7 @@ namespace Emp37.Tweening
             private Delta timeMode;
             private float inverseDuration, progress, delay;
             private bool bootstrapped;
+            private bool isAutoKill;
 
             private Action initTween;
             private Action<T> easeTween;
@@ -106,6 +107,7 @@ namespace Emp37.Tweening
                   { Type.InOutBounce, InOutBounce }
             };
 
+            bool ITween.AutoKill { get => isAutoKill; set => isAutoKill = value; }
             public bool Recyclable { get; set; }
             public string Tag { get; set; }
             public Phase Phase { get; private set; }
@@ -129,12 +131,6 @@ namespace Emp37.Tweening
             private bool IsDestroyed => linkedTarget == null;
 
 
-            void ITween.Init()
-            {
-                  if (Phase is Phase.Finished || IsDestroyed) return;
-
-                  Phase = Phase.Active;
-            }
             void ITween.Update()
             {
                   if (IsDestroyed)
@@ -186,7 +182,7 @@ namespace Emp37.Tweening
                   Phase = Phase.Finished;
                   Utils.SafeInvoke(actionOnComplete);
 
-                  Conclude();
+                  if (isAutoKill) Kill();
             }
 
             public virtual void Pause()
@@ -208,7 +204,9 @@ namespace Emp37.Tweening
             }
             public virtual void Reset()
             {
+                  direction = 1;
                   progress = 0F;
+                  Phase = Phase.Active;
             }
 
             private void Conclude()
@@ -251,6 +249,7 @@ namespace Emp37.Tweening
             #region P O O L   A C T I O N S
             private void OnGet()
             {
+                  isAutoKill = true;
                   Phase = Phase.None;
                   Recyclable = true;
                   a = b = current = default;

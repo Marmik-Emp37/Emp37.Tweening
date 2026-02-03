@@ -14,7 +14,9 @@ namespace Emp37.Tweening
       {
             // E X T E N S I O N S
             public static T Play<T>(this T tween) where T : ITween { Factory.Play(tween); return tween; }
+            public static T Restart<T>(this T tween) where T : ITween { tween.Reset(); return tween; }
             public static T WithTag<T>(this T tween, string tag) where T : ITween { tween.Tag = tag; return tween; }
+            public static T SetAutoKill<T>(this T tween, bool autoKill) where T : ITween { tween.AutoKill = autoKill; return tween; }
             public static Sequence Then(this ITween current, ITween next) => Sequence(current, next);
 
 
