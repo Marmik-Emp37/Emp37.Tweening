@@ -1,314 +1,151 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 
 using UnityEngine;
 using UnityEngine.Pool;
-
-using UObject = UnityEngine.Object;
 
 namespace Emp37.Tweening
 {
       using static Ease;
 
-      public class Value<T> : ITween where T : struct
+      public class Value<TValue> : Tween where TValue : struct
       {
-            internal static readonly Value<T> Empty = new Blank();
-            private sealed class Blank : Value<T>
+            // D E L E G A T E S
+            public delegate TValue Lerp(TValue a, TValue b, float ratio);
+
+            // S T A T I C
+            private static readonly ObjectPool<Value<TValue>> pool = new(
+                  createFunc: () => new Value<TValue>(),
+                  actionOnGet: v => v.RestoreToDefault(),
+                  collectionCheck: true,
+                  defaultCapacity: 64,
+                  maxSize: 4096);
+
+            public static readonly Value<TValue> Blank = new Blank<TValue>();
+
+            // F I E L D S
+            private Func<TValue> source, destination;
+            private Action<TValue> applyValue;
+            private Method easeFunction;
+            private Lerp lerpFunction;
+            private Func<TValue, TValue> valueModifier;
+
+            private TValue a, b, current;
+            private float normalizedTime, inverseDuration, direction;
+
+            // P R O P E R T I E S
+            public override bool IsEmpty => ReferenceEquals(Blank, this) || IsLinkDead;
+
+            // C R E A T I O N
+            internal static Value<TValue> Fetch(Func<TValue> source, Func<TValue> destination, float duration, Action<TValue> update, Lerp lerpFunction)
             {
-                  public override Value<T> addModifier(Modifier method) => this;
-                  public override Value<T> disableLoop() => this;
-                  public override Value<T> setRecyclable(bool _) => this;
-                  public override Value<T> setDelay(float _) => this;
-                  public override Value<T> setEase(Type _) => this;
-                  public override Value<T> setEase(AnimationCurve _) => this;
-                  public override Value<T> setEase(Method _) => this;
-                  public override Value<T> setLoop(int _, LoopType __, float ___) => this;
-                  public override Value<T> setProgress(float _) => this;
-                  public override Value<T> setTarget(T _, bool __) => this;
-                  public override Value<T> setTimeMode(Delta _) => this;
-                  public override Value<T> onStart(Action _) => this;
-                  public override Value<T> onUpdate(Action<float> _) => this;
-                  public override Value<T> onComplete(Action _) => this;
-                  public override Value<T> onKill(Action _) => this;
-                  public override Value<T> onConclude(Action _) => this;
+                  #region V A L I D A T I O N
+                  bool isValid = true;
 
-                  public override void Pause() { }
-                  public override void Resume() { }
-                  public override void Kill() { }
-                  public override void Reset() { }
-
-                  public override string ToString() => $"{nameof(Value<T>)}<{typeof(T).Name}>.{nameof(Blank)}";
-            }
-
-
-            /// <summary>Transforms a value during interpolation.</summary>
-            public delegate T Modifier(T value);
-
-            /// <summary>Interpolates between two values.</summary>
-            public delegate T Evaluator(T a, T b, float ratio);
-
-
-            private static readonly ObjectPool<Value<T>> pool = new(() => new Value<T>(), actionOnGet: v => v.OnGet(), actionOnRelease: v => v.OnRelease(), collectionCheck: true, defaultCapacity: 64);
-
-            private T a, b, current;
-            private Delta timeMode;
-            private float inverseDuration, progress, delay;
-            private bool bootstrapped;
-
-            private Action initTween;
-            private Action<T> easeTween;
-            private Method easingMethod;
-            private Modifier modifier;
-            private Evaluator evaluate;
-
-            private UObject linkedTarget;
-
-            private LoopType loopType;
-            private int remainingLoops;
-            private float loopInterval;
-            private sbyte direction;
-
-            private Action actionOnStart, actionOnComplete, actionOnKill, actionOnConclude;
-            private Action<float> actionOnUpdate;
-
-            private static readonly IReadOnlyDictionary<Type, Method> easeTypeMap = new Dictionary<Type, Method>
-            {
-                  { Type.Linear, Linear },
-                  { Type.InSine, InSine },
-                  { Type.OutSine, OutSine },
-                  { Type.InOutSine, InOutSine },
-                  { Type.InCubic, InCubic },
-                  { Type.OutCubic, OutCubic },
-                  { Type.InOutCubic, InOutCubic },
-                  { Type.InQuint, InQuint },
-                  { Type.OutQuint, OutQuint },
-                  { Type.InOutQuint, InOutQuint },
-                  { Type.InCirc, InCirc },
-                  { Type.OutCirc, OutCirc },
-                  { Type.InOutCirc, InOutCirc },
-                  { Type.InQuad, InQuad },
-                  { Type.OutQuad, OutQuad },
-                  { Type.InOutQuad, InOutQuad },
-                  { Type.InQuart, InQuart },
-                  { Type.OutQuart, OutQuart },
-                  { Type.InOutQuart, InOutQuart },
-                  { Type.InExpo, InExpo },
-                  { Type.OutExpo, OutExpo },
-                  { Type.InOutExpo, InOutExpo },
-                  { Type.InBack, InBack },
-                  { Type.OutBack, OutBack },
-                  { Type.InOutBack, InOutBack },
-                  { Type.InElastic, InElastic },
-                  { Type.OutElastic, OutElastic },
-                  { Type.InOutElastic, InOutElastic },
-                  { Type.InBounce, InBounce },
-                  { Type.OutBounce, OutBounce },
-                  { Type.InOutBounce, InOutBounce }
-            };
-
-            public bool Recyclable { get; set; }
-            public string Tag { get; set; }
-            public Phase Phase { get; private set; }
-            public bool IsEmpty => ReferenceEquals(this, Empty) || IsDestroyed;
-            public Info Info => new($"{nameof(Value<T>)}<{typeof(T).Name}>", progress, new Info.Property[]
-            {
-                  new("Target", linkedTarget == null ? "Destroyed" : linkedTarget.name),
-                  new("Delay", $"{delay:0.00}s"),
-                  new("Range", $"Initial - {a} → Target - {b}"),
-                  new("Duration", $"{1F / inverseDuration: 0.###}s"),
-                  new("Loop Info", $"Type - {loopType} | Remaining - {remainingLoops} | Interval - {loopInterval}"),
-                  new("Ease", easingMethod ?.Method ?.Name ?? "None"),
-                  new("Time Mode", timeMode),
-                  new("Action On Start", actionOnStart ?.Method.Name ?? "None"),
-                  new("Action On Update", actionOnUpdate ?.Method.Name ?? "None"),
-                  new("Action On Complete", actionOnComplete ?.Method.Name ?? "None"),
-                  new("Action On Kill", actionOnKill ?.Method.Name ?? "None"),
-                  new("Action On Conclude", actionOnConclude ?.Method.Name ?? "None")
-            });
-
-            private bool IsDestroyed => linkedTarget == null;
-
-
-            void ITween.Init()
-            {
-                  if (Phase is Phase.Finished || IsDestroyed) return;
-
-                  Phase = Phase.Active;
-            }
-            void ITween.Update()
-            {
-                  if (IsDestroyed)
+                  void reject(string message)
                   {
-                        Kill();
-                        return;
+                        Log.Warning($"Tween creation failed ({typeof(Value<TValue>).Name}<{typeof(TValue).Name}>): " + message);
+                        isValid = false;
                   }
+                  if (source is null) reject($"Missing '{nameof(source)}' function to capture the start value.");
+                  if (destination is null) reject($"Missing '{nameof(destination)}' function to capture the end value.");
+                  if (float.IsNaN(duration) || float.IsInfinity(duration) || duration <= 0F) reject($"Duration must be a finite number and greater than 0 (received {duration}).");
+                  if (update is null) reject($"Missing '{nameof(update)}' callback to apply tweening.");
+                  if (lerpFunction is null) reject($"Missing '{nameof(lerpFunction)}' action to compute interpolated values.");
+                  #endregion
 
-                  float deltaTime = (timeMode == Delta.Unscaled) ? Time.unscaledDeltaTime : Time.deltaTime;
+                  if (!isValid) return Blank;
 
-                  if (delay > 0F)
+                  Value<TValue> tween = pool.Get();
+                  tween.source = source;
+                  tween.destination = destination;
+                  tween.inverseDuration = 1F / duration;
+                  tween.lerpFunction = lerpFunction;
+                  tween.applyValue = update;
+                  return tween;
+            }
+
+            // U P D A T E   L O O P
+            private bool Update(float deltaTime)
+            {
+                  float t = normalizedTime + deltaTime * direction * inverseDuration;
+                  if (t >= 1F)
                   {
-                        if ((delay -= deltaTime) > 0F) return;
-                        deltaTime = -delay; // carry over excess time
-                        delay = 0F;
+                        Apply(normalizedTime = 1F);
+                        return direction == 1F;
                   }
-
-                  if (!bootstrapped)
+                  if (t <= 0F)
                   {
-                        bootstrapped = true;
-                        try { initTween(); } catch (Exception ex) { HandleException(ex); return; }
-                        Utils.SafeInvoke(actionOnStart);
+                        Apply(normalizedTime = 0F);
+                        return direction == -1F;
                   }
+                  normalizedTime = t;
+                  Apply(t);
+                  return false;
+            }
+            private void Apply(float ratio)
+            {
+                  float easedRatio = easeFunction(ratio);
+                  TValue value = lerpFunction(a, b, easedRatio);
 
-                  progress = Mathf.Min(progress + deltaTime * inverseDuration, 1F);
-                  float ratio = direction > 0 ? progress : 1F - progress;
-                  float easedRatio = easingMethod(ratio);
-                  T value = evaluate(a, b, easedRatio);
-                  if (modifier != null)
-                  {
-                        try { value = modifier(value); } catch (Exception ex) { Log.Error($"Modifier exception: {ex.Message}"); }
-                  }
-                  try { easeTween(current = value); } catch (Exception ex) { HandleException(ex); return; }
+                  Func<TValue, TValue> modifier = valueModifier;
+                  if (modifier != null) value = modifier(value);
 
-                  Utils.SafeInvoke(actionOnUpdate, easedRatio);
-
-                  if (progress < 1F) return;
-
-                  if (loopType != LoopType.None && remainingLoops != 0)
-                  {
-                        if (remainingLoops > 0) remainingLoops--; // decrement if finite
-                        if (loopType is LoopType.Yoyo) direction *= -1;
-
-                        progress = 0F;
-                        delay = loopInterval;
-                        return;
-                  }
-
-                  Phase = Phase.Finished;
-                  Utils.SafeInvoke(actionOnComplete);
-
-                  Conclude();
+                  applyValue(current = value);
             }
 
-            public virtual void Pause()
+            // L I F E C Y C L E
+            protected override void RestoreToDefault()
             {
-                  if (Phase == Phase.Active) Phase = Phase.Paused;
-            }
-            public virtual void Resume()
-            {
-                  if (Phase == Phase.Paused) Phase = Phase.Active;
-            }
-            public virtual void Kill()
-            {
-                  if (Phase is Phase.None or Phase.Finished) return;
+                  base.RestoreToDefault();
 
-                  Phase = Phase.None;
-                  Utils.SafeInvoke(actionOnKill);
-
-                  Conclude();
-            }
-            public virtual void Reset()
-            {
-                  progress = 0F;
-            }
-
-            private void Conclude()
-            {
-                  Utils.SafeInvoke(actionOnConclude);
-                  if (Recyclable)
-                  {
-                        pool.Release(this);
-                  }
-            }
-            private void HandleException(Exception ex)
-            {
-                  Log.Exception(ex);
-                  Kill();
-            }
-
-
-            #region F L U E N T   A P I
-#pragma warning disable IDE1006 // naming styles
-            public virtual Value<T> addModifier(Modifier method) { if (!IsDestroyed && method != null) modifier = modifier == null ? method : (value => method(modifier(value))); return this; }
-            public virtual Value<T> disableLoop() { loopType = LoopType.None; remainingLoops = 0; return this; }
-            public virtual Value<T> setRecyclable(bool value) { Recyclable = value; return this; }
-            public virtual Value<T> setDelay(float seconds) { delay = seconds; return this; }
-            public virtual Value<T> setEase(Type type) { if (!IsDestroyed) easingMethod = easeTypeMap[type]; return this; }
-            public virtual Value<T> setEase(Method method) { if (!IsDestroyed) easingMethod = method; return this; }
-            public virtual Value<T> setEase(AnimationCurve curve) { if (!IsDestroyed) easingMethod = curve.Evaluate; return this; }
-            public virtual Value<T> setLoop(int cycles, LoopType type, float delay = 0F) { remainingLoops = (cycles <= 0) ? -1 : cycles; loopType = type; loopInterval = Mathf.Max(0F, delay); return this; }
-            public virtual Value<T> setProgress(float normalizedValue) { progress = Mathf.Clamp01(normalizedValue); return this; }
-            public virtual Value<T> setTarget(T value, bool rebaseStart = false) { if (rebaseStart) a = current; b = value; return this; }
-            public virtual Value<T> setTimeMode(Delta mode) { timeMode = mode; return this; }
-
-            public virtual Value<T> onStart(Action action) { if (!IsDestroyed) actionOnStart = action; return this; }
-            public virtual Value<T> onUpdate(Action<float> action) { if (!IsDestroyed) actionOnUpdate = action; return this; }
-            public virtual Value<T> onComplete(Action action) { if (!IsDestroyed) actionOnComplete = action; return this; }
-            public virtual Value<T> onKill(Action action) { if (!IsDestroyed) actionOnKill = action; return this; }
-            public virtual Value<T> onConclude(Action action) { if (!IsDestroyed) actionOnConclude = action; return this; }
-#pragma warning restore IDE1006
-            #endregion
-
-            #region P O O L   A C T I O N S
-            private void OnGet()
-            {
-                  Phase = Phase.None;
-                  Recyclable = true;
+                  updateFunc = Update;
                   a = b = current = default;
-                  timeMode = Delta.Scaled;
-                  inverseDuration = 0F;
-                  progress = 0F;
-                  delay = 0F;
-                  bootstrapped = false;
-                  easingMethod = Linear;
-                  evaluate = null;
-                  loopType = LoopType.None;
-                  remainingLoops = 0;
-                  loopInterval = 0F;
-                  direction = 1;
-                  Tag = null;
+                  normalizedTime = inverseDuration = 0F;
+                  direction = 1F;
+                  easeFunction = Linear;
             }
-            private void OnRelease()
+            protected override void OnReset()
             {
-                  initTween = null;
-                  easeTween = null;
-                  easingMethod = null;
-                  modifier = null;
-                  actionOnStart = null;
-                  actionOnComplete = null;
-                  actionOnKill = null;
-                  actionOnConclude = null;
-                  actionOnUpdate = null;
-                  linkedTarget = null;
+                  normalizedTime = 0F;
+                  direction = 1F;
             }
-            #endregion
+            protected override void Clear()
+            {
+                  base.Clear();
 
-
-            private static bool Validate(UObject link, object initialization, object target, float duration, object update, object evaluator)
-            {
-                  bool ok = true;
-                  if (link == null) { Log.RejectTween($"No valid ({nameof(link)}) provided."); ok = false; }
-                  if (initialization == null) { Log.RejectTween($"Missing ({nameof(initialization)}) delegate to capture the start value."); ok = false; }
-                  if (target == null) { Log.RejectTween($"Missing ({nameof(target)}) value or getter."); ok = false; }
-                  if (duration <= 0F) { Log.RejectTween($"Duration must be greater than 0 (received  {duration})."); ok = false; }
-                  if (update == null) { Log.RejectTween($"Missing ({nameof(update)}) callback to apply tweened values."); ok = false; }
-                  if (evaluator == null) { Log.RejectTween($"Missing ({nameof(evaluator)}) function to compute interpolated values."); ok = false; }
-                  return ok;
+                  source = destination = null;
+                  applyValue = null; easeFunction = null; lerpFunction = null; valueModifier = null;
             }
-            internal static Value<T> Fetch(UObject link, Func<T> initialization, Func<T> target, float duration, Action<T> update, Evaluator evaluator)
+
+            protected override void OnInitialize()
             {
-                  if (!Validate(link, initialization, target, duration, update, evaluator)) return Empty;
-                  Value<T> value = pool.Get();
-                  value.linkedTarget = link;
-                  value.initTween = () =>
+                  a = current = source();
+                  b = destination();
+            }
+            protected override void OnLoopComplete(LoopType loopType)
+            {
+                  switch (loopType)
                   {
-                        value.a = initialization();
-                        value.b = target();
-                        value.current = value.a;
-                  };
-                  value.inverseDuration = 1F / duration;
-                  value.easeTween = update;
-                  value.evaluate = evaluator;
-                  return value;
+                        case LoopType.None: return;
+                        case LoopType.Yoyo:
+                              direction = -direction;
+                              break;
+                  }
+                  normalizedTime = direction < 0f ? 1F : 0F;
             }
+            protected override void OnRewind(bool snap)
+            {
+                  if (snap) Apply(0F);
+                  else direction = -1F;
+            }
+            protected override void OnRecycle() => pool.Release(this);
+
+            #region F L U E N T   M E T H O D S
+            public virtual Value<TValue> SetModifier(Func<TValue, TValue> method) { valueModifier = method; return this; }
+            public virtual Value<TValue> SetEase(Type type) { easeFunction = TypeMap[type]; return this; }
+            public virtual Value<TValue> SetEase(AnimationCurve curve) { easeFunction = curve.Evaluate; return this; }
+            public virtual Value<TValue> SetEase(Method method) { easeFunction = method; return this; }
+            public virtual Value<TValue> SetTarget(TValue value, bool rebaseStart = false) { if (rebaseStart) a = current; b = value; return this; }
+            #endregion
       }
 }

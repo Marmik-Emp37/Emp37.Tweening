@@ -5,15 +5,12 @@ using UnityEngine;
 
 namespace Emp37.Tweening
 {
-      [DefaultExecutionOrder(1), AddComponentMenu(""), DisallowMultipleComponent]
+      [DefaultExecutionOrder(1), DisallowMultipleComponent, AddComponentMenu("")]
       public sealed class Factory : MonoBehaviour
       {
             private static Factory instance = null!;
 
-            private static readonly List<ITween> tweens = new(128);
-
-            public static IReadOnlyList<ITween> Tweens => tweens;
-            public static int ActiveTweens => tweens.Count;
+            private static readonly List<Tween> activeTweens = new(128);
 
 
             private Factory()
@@ -29,50 +26,45 @@ namespace Emp37.Tweening
                         instance = null;
                   }
                   instance = new GameObject("~" + nameof(Factory)).AddComponent<Factory>();
+                  DontDestroyOnLoad(instance);
             }
 
-            private void Awake()
-            {
-                  enabled = false;
-                  DontDestroyOnLoad(this);
-            }
             private void LateUpdate()
             {
-                  for (int i = tweens.Count - 1; i >= 0; i--)
+                  for (int i = activeTweens.Count - 1; i >= 0; i--)
                   {
-                        ITween tween = tweens[i];
+                        Tween tween = activeTweens[i];
 
-                        if (tween.Phase is Phase.Active) tween.Update();
-                        if (tween.Phase is not (Phase.Finished or Phase.None)) continue;
+                        if (tween.phase == Phase.Active) tween.Update();
+                        if (tween.phase != Phase.Dead) continue;
 
-                        int last = tweens.Count - 1;
-                        if (i != last) tweens[i] = tweens[last];
-                        tweens.RemoveAt(last);
+                        int last = activeTweens.Count - 1;
+                        if (i != last) activeTweens[i] = activeTweens[last];
+                        activeTweens.RemoveAt(last);
 
-                        if (tweens.Count == 0)
+                        if (activeTweens.Count == 0)
                         {
                               enabled = false;
-                              break;
+                              return;
                         }
                   }
             }
             private void OnDestroy()
             {
                   if (instance != this) return;
-
-                  tweens.Clear();
+                  activeTweens.Clear();
                   instance = null;
             }
 
-            public static void Play(ITween tween)
+            public static void Register(Tween tween)
             {
                   if (instance == null || tween == null || tween.IsEmpty) return;
-                  if (tweens.Count == tweens.Capacity)
+                  if (activeTweens.Count == activeTweens.Capacity)
                   {
-                        Log.Warning($"[{typeof(Factory).FullName}] Tween capacity ({tweens.Capacity}) reached. Factory is scaling up, check for leaks or unintended bursts.");
+                        Log.Info($"[{typeof(Factory).FullName}] Tween capacity ({activeTweens.Capacity}) reached. Factory is scaling up, check for leaks or unintended bursts.", instance);
                   }
-                  tween.Init();
-                  tweens.Add(tween);
+                  activeTweens.Add(tween);
+                  tween.Replay();
 
                   instance.enabled = true;
             }
@@ -81,14 +73,14 @@ namespace Emp37.Tweening
             {
                   if (string.IsNullOrWhiteSpace(tag))
                   {
-                        for (int i = 0; i < tweens.Count; i++) tweens[i].Pause();
+                        for (int i = 0; i < activeTweens.Count; i++) activeTweens[i].Pause();
                   }
                   else
                   {
-                        for (int i = 0; i < tweens.Count; i++)
+                        for (int i = 0; i < activeTweens.Count; i++)
                         {
-                              ITween e = tweens[i];
-                              if (string.Equals(e.Tag, tag, StringComparison.Ordinal)) e.Pause();
+                              Tween t = activeTweens[i];
+                              if (tag.Equals(t.Tag, StringComparison.Ordinal)) t.Pause();
                         }
                   }
             }
@@ -96,14 +88,14 @@ namespace Emp37.Tweening
             {
                   if (string.IsNullOrWhiteSpace(tag))
                   {
-                        for (int i = 0; i < tweens.Count; i++) tweens[i].Resume();
+                        for (int i = 0; i < activeTweens.Count; i++) activeTweens[i].Resume();
                   }
                   else
                   {
-                        for (int i = 0; i < tweens.Count; i++)
+                        for (int i = 0; i < activeTweens.Count; i++)
                         {
-                              ITween e = tweens[i];
-                              if (string.Equals(e.Tag, tag, StringComparison.Ordinal)) e.Resume();
+                              Tween t = activeTweens[i];
+                              if (tag.Equals(t.Tag, StringComparison.Ordinal)) t.Resume();
                         }
                   }
             }
@@ -111,19 +103,19 @@ namespace Emp37.Tweening
             {
                   if (string.IsNullOrWhiteSpace(tag))
                   {
-                        for (int i = 0; i < tweens.Count; i++)
+                        for (int i = 0; i < activeTweens.Count; i++)
                         {
-                              tweens[i].Kill();
+                              activeTweens[i].Kill();
                         }
-                        tweens.Clear();
+                        activeTweens.Clear();
                         instance.enabled = false;
                   }
                   else
                   {
-                        for (int i = 0; i < tweens.Count; i++)
+                        for (int i = 0; i < activeTweens.Count; i++)
                         {
-                              ITween e = tweens[i];
-                              if (string.Equals(e.Tag, tag, StringComparison.Ordinal)) e.Kill();
+                              Tween t = activeTweens[i];
+                              if (tag.Equals(t.Tag, StringComparison.Ordinal)) t.Kill();
                         }
                   }
             }
