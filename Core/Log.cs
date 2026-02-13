@@ -15,6 +15,6 @@ namespace Emp37.Tweening
             [Conditional(UNITY_EDITOR)] public static void Info(object message, UObject context = null) { if (Enabled) Log(message, context); }
             [Conditional(UNITY_EDITOR)] public static void Warning(object message, UObject context = null) { if (Enabled) LogWarning(message, context); }
             [Conditional(UNITY_EDITOR)] public static void Error(object message, UObject context = null) { if (Enabled) LogError(message, context); }
-            [Conditional(UNITY_EDITOR)] public static void Exception(Exception exception, UObject context = null) { if (Enabled) LogException(exception, context); }
+            [Conditional(UNITY_EDITOR)] public static void Exception(this Tween tween, Exception exception) { if (Enabled) LogException(exception, tween.linkedTarget); }
       }
 }

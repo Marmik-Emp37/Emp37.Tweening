@@ -40,22 +40,6 @@ namespace Emp37.Tweening
 
             public override bool IsEmpty => ReferenceEquals(Blank, this) || IsLinkDestroyed;
 
-
-            protected override void Reset()
-            {
-                  base.Reset();
-
-                  initializationPending = true;
-                  reversePlayback = false;
-
-                  elapsed = 0F;
-                  a = b = current = default;
-                  delayTime = 0F;
-                  inverseDuration = 0F;
-
-                  easeFunction = Linear;
-            }
-
             internal static Value<TValue> Fetch(Func<TValue> source, Func<TValue> destination, float duration, Action<TValue> update, Interpolator interpolator)
             {
                   #region V A L I D A T I O N
@@ -87,6 +71,21 @@ namespace Emp37.Tweening
                   return tween;
             }
 
+            protected override void Reset()
+            {
+                  base.Reset();
+
+                  initializationPending = true;
+                  reversePlayback = false;
+
+                  elapsed = 0F;
+                  a = b = current = default;
+                  delayTime = 0F;
+                  inverseDuration = 0F;
+
+                  easeFunction = Linear;
+            }
+
             protected override bool OnUpdate(float deltaTime)
             {
                   if (elapsed < 0F)
@@ -94,50 +93,47 @@ namespace Emp37.Tweening
                         elapsed += deltaTime;
                         return false;
                   }
+
                   if (initializationPending)
                   {
-                        if (TryInvoke(bootstrap, true)) return false;
+                        if (TryInvoke(bootstrap, killOnException: true)) return false;
                         TryInvoke(onStart);
 
                         initializationPending = false;
                   }
+
                   float direction = reversePlayback ? -1F : 1F;
                   elapsed = Mathf.Clamp01(elapsed + deltaTime * direction * inverseDuration);
+
                   float easedRatio = easeFunction(elapsed);
                   TValue value = interpolator(a, b, easedRatio);
+
                   if (valueModifier != null)
                   {
                         try { value = valueModifier(value); }
                         catch (Exception ex)
                         {
-                              Log.Exception(ex, linkedTarget);
+                              this.Exception(ex);
                               Kill();
                               return false;
                         }
                   }
-                  if (TryInvoke(setter, current = value, true)) return false;
+
+                  if (TryInvoke(setter, current = value, killOnException: true)) return false;
                   TryInvoke(onUpdate);
+
                   return elapsed == (reversePlayback ? 0F : 1F);
             }
             protected override void OnLoop(Loop.Type loopType)
             {
                   switch (loopType)
                   {
-                        case Loop.Type.Repeat:
-                              elapsed = reversePlayback ? 1F : 0F;
-                              break;
-
+                        case Loop.Type.None: return;
                         case Loop.Type.Yoyo:
-                              elapsed = reversePlayback ? 0F : 1F; reversePlayback = !reversePlayback;
+                              reversePlayback = !reversePlayback;
                               break;
                   }
-            }
-            protected override void OnStepComplete(PlaybackMode mode)
-            {
-                  if (mode != PlaybackMode.Rewind) return;
-                  reversePlayback = false;
-                  loopsCompleted = 0;
-                  elapsed = -delayTime;
+                  elapsed = reversePlayback ? 1F : 0F;
             }
 
             protected override void Clear()
@@ -167,15 +163,11 @@ namespace Emp37.Tweening
                   {
                         ResetPlayback(true);
                         TryInvoke(setter, current = a, true);
-                        OnPause();
                   }
-                  else
-                  {
-                        playbackMode = PlaybackMode.Rewind;
-                        reversePlayback = true;
-                        Phase = Phase.Active;
-                  }
+                  else reversePlayback = true;
+                  base.Rewind(snap);
             }
+            protected override void OnRewindComplete() => ResetPlayback(true);
 
             private void ResetPlayback(bool includeDelay)
             {

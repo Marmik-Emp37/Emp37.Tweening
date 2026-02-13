@@ -1,6 +1,8 @@
+using DG.Tweening.Core;
 using System;
 
 using UnityEngine;
+using static Codice.CM.Common.CmCallContext;
 using UObject = UnityEngine.Object;
 
 namespace Emp37.Tweening
@@ -19,7 +21,7 @@ namespace Emp37.Tweening
             internal Options options;
 
             internal UObject linkedTarget;
-            internal Action onStart, onUpdate, onStepComplete, onComplete, onKill;
+            internal Action onStart, onUpdate, onLoopComplete, onComplete, onKill;
 
             internal Loop loop;
             internal int loopsCompleted;
@@ -52,28 +54,26 @@ namespace Emp37.Tweening
                   }
                   float delta = (timeMode == Delta.Unscaled) ? Time.unscaledDeltaTime : Time.deltaTime;
                   if (!OnUpdate(delta)) return;
-                  OnStepComplete(playbackMode);
-                  TryInvoke(onStepComplete);
                   switch (playbackMode)
                   {
                         case PlaybackMode.Normal:
+                              if (loop.Mode != 0 && loopsCompleted < loop.Count)
                               {
-                                    if (loop.Mode != 0 && loopsCompleted < loop.Count)
-                                    {
-                                          OnLoop(loop.Mode);
-                                          loopsCompleted++;
-                                          return;
-                                    }
+                                    loopsCompleted++;
+                                    TryInvoke(onLoopComplete);
+                                    OnLoop(loop.Mode);
+                              }
+                              else
+                              {
                                     Phase = Phase.Completed;
                                     TryInvoke(onComplete);
                               }
                               break;
 
                         case PlaybackMode.Rewind:
-                              {
-                                    playbackMode = PlaybackMode.Normal;
-                                    Phase = Phase.Paused;
-                              }
+                              playbackMode = PlaybackMode.Normal;
+                              Phase = Phase.Paused;
+                              OnRewindComplete();
                               break;
                   }
                   if ((options & Options.AutoKill) != 0)
@@ -83,7 +83,14 @@ namespace Emp37.Tweening
             }
             protected abstract bool OnUpdate(float deltaTime);
             protected abstract void OnLoop(Loop.Type loopType);
-            protected virtual void OnStepComplete(PlaybackMode mode) { }
+
+            public void Replay()
+            {
+                  playbackMode = PlaybackMode.Normal;
+                  OnReplay();
+                  Phase = Phase.Active;
+            }
+            protected abstract void OnReplay();
 
             internal void Pause()
             {
@@ -97,6 +104,17 @@ namespace Emp37.Tweening
             }
             protected virtual void OnResume() => Phase = Phase.Active;
 
+            public virtual void Rewind(bool snap = true)
+            {
+                  if (snap) OnPause();
+                  else
+                  {
+                        playbackMode = PlaybackMode.Rewind;
+                        Phase = Phase.Active;
+                  }
+            }
+            protected abstract void OnRewindComplete();
+
             public void Kill()
             {
                   if (IsNone) return;
@@ -109,23 +127,10 @@ namespace Emp37.Tweening
             }
             protected virtual void Clear()
             {
-                  onStart = onUpdate = onStepComplete = onComplete = onKill = null;
+                  onStart = onUpdate = onLoopComplete = onComplete = onKill = null;
                   linkedTarget = null;
             }
             protected abstract void OnRecycle();
-
-            public void Replay()
-            {
-                  playbackMode = PlaybackMode.Normal;
-                  OnReplay();
-                  Phase = Phase.Active;
-            }
-            protected abstract void OnReplay();
-
-            public virtual void Rewind(bool snap = true)
-            {
-
-            }
 
             #region H E L P E R S
             protected bool TryInvoke(Action handler, bool killOnException = false)
@@ -137,7 +142,7 @@ namespace Emp37.Tweening
                   }
                   catch (Exception ex)
                   {
-                        Log.Exception(ex, linkedTarget);
+                        this.Exception(ex);
                         if (killOnException) Kill();
                         return true;
                   }
@@ -151,7 +156,7 @@ namespace Emp37.Tweening
                   }
                   catch (Exception ex)
                   {
-                        Log.Exception(ex, linkedTarget);
+                        this.Exception(ex);
                         if (killOnException) Kill();
                         return true;
                   }
