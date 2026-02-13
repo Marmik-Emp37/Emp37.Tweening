@@ -7,11 +7,19 @@ namespace Emp37.Tweening
 {
       public abstract class Tween
       {
+            protected enum PlaybackMode : byte
+            {
+                  Normal, Rewind
+            }
+
+            protected PlaybackMode playbackMode;
+
             internal string tag;
             internal Delta timeMode;
             internal Options options;
-            internal Action onStart, onUpdate, onComplete, onKill;
+
             internal UObject linkedTarget;
+            internal Action onStart, onUpdate, onStepComplete, onComplete, onKill;
 
             internal Loop loop;
             internal int loopsCompleted;
@@ -20,6 +28,20 @@ namespace Emp37.Tweening
             public bool IsNone => Phase is Phase.None;
             protected bool IsLinkDestroyed => (options & Options.Link) != 0 && linkedTarget == null;
             public abstract bool IsEmpty { get; }
+
+            protected virtual void Reset()
+            {
+                  playbackMode = PlaybackMode.Normal;
+
+                  tag = null;
+                  timeMode = Delta.Scaled;
+                  options = Options.AutoKill | Options.Recycle;
+
+                  loop = Loop.Default;
+                  loopsCompleted = 0;
+
+                  Phase = Phase.None;
+            }
 
             internal void Update()
             {
@@ -30,17 +52,30 @@ namespace Emp37.Tweening
                   }
                   float delta = (timeMode == Delta.Unscaled) ? Time.unscaledDeltaTime : Time.deltaTime;
                   if (!OnUpdate(delta)) return;
-
-                  if (loop.Mode != 0 && loopsCompleted < loop.Count)
+                  OnStepComplete(playbackMode);
+                  TryInvoke(onStepComplete);
+                  switch (playbackMode)
                   {
-                        OnLoop(loop.Mode);
-                        loopsCompleted++;
-                        return;
+                        case PlaybackMode.Normal:
+                              {
+                                    if (loop.Mode != 0 && loopsCompleted < loop.Count)
+                                    {
+                                          OnLoop(loop.Mode);
+                                          loopsCompleted++;
+                                          return;
+                                    }
+                                    Phase = Phase.Completed;
+                                    TryInvoke(onComplete);
+                              }
+                              break;
+
+                        case PlaybackMode.Rewind:
+                              {
+                                    playbackMode = PlaybackMode.Normal;
+                                    Phase = Phase.Paused;
+                              }
+                              break;
                   }
-
-                  Phase = Phase.Completed;
-                  TryInvoke(onComplete);
-
                   if ((options & Options.AutoKill) != 0)
                   {
                         Kill();
@@ -48,7 +83,7 @@ namespace Emp37.Tweening
             }
             protected abstract bool OnUpdate(float deltaTime);
             protected abstract void OnLoop(Loop.Type loopType);
-
+            protected virtual void OnStepComplete(PlaybackMode mode) { }
 
             internal void Pause()
             {
@@ -74,19 +109,23 @@ namespace Emp37.Tweening
             }
             protected virtual void Clear()
             {
+                  onStart = onUpdate = onStepComplete = onComplete = onKill = null;
                   linkedTarget = null;
-                  onStart = onUpdate = onComplete = onKill = null;
             }
             protected abstract void OnRecycle();
 
             public void Replay()
             {
+                  playbackMode = PlaybackMode.Normal;
                   OnReplay();
                   Phase = Phase.Active;
             }
             protected abstract void OnReplay();
 
-            public abstract void Rewind(bool snap = true);
+            public virtual void Rewind(bool snap = true)
+            {
+
+            }
 
             #region H E L P E R S
             protected bool TryInvoke(Action handler, bool killOnException = false)

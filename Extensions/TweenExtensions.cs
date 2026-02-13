@@ -58,6 +58,11 @@ namespace Emp37.Tweening
                   tween.onUpdate = callback;
                   return tween;
             }
+            public static T OnStepComplete<T>(this T tween, Action callback) where T : Tween
+            {
+                  tween.onStepComplete = callback;
+                  return tween;
+            }
             public static T OnComplete<T>(this T tween, Action callback) where T : Tween
             {
                   tween.onComplete = callback;

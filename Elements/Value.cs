@@ -16,7 +16,7 @@ namespace Emp37.Tweening
             // S T A T I C S
             private static readonly ObjectPool<Value<TValue>> pool = new(
                   createFunc: () => new Value<TValue>(),
-                  actionOnGet: v => v.OnGet(),
+                  actionOnGet: v => v.Reset(),
                   collectionCheck: true,
                   defaultCapacity: 64,
                   maxSize: 4096);
@@ -41,12 +41,9 @@ namespace Emp37.Tweening
             public override bool IsEmpty => ReferenceEquals(Blank, this) || IsLinkDestroyed;
 
 
-            #region P O O L   A C T I O N S
-            private void OnGet()
+            protected override void Reset()
             {
-                  tag = null;
-                  timeMode = Delta.Scaled;
-                  options = Options.AutoKill | Options.Recycle;
+                  base.Reset();
 
                   initializationPending = true;
                   reversePlayback = false;
@@ -56,42 +53,38 @@ namespace Emp37.Tweening
                   delayTime = 0F;
                   inverseDuration = 0F;
 
-                  loop = Loop.Default;
-                  loopsCompleted = 0;
-
                   easeFunction = Linear;
             }
-            #endregion
 
             internal static Value<TValue> Fetch(Func<TValue> source, Func<TValue> destination, float duration, Action<TValue> update, Interpolator interpolator)
             {
                   #region V A L I D A T I O N
                   bool isValid = true;
-                  if (source is null) rejectTween($"Missing '{nameof(source)}' function to capture the start value.");
-                  if (destination is null) rejectTween($"Missing '{nameof(destination)}' function to capture the end value.");
-                  if (float.IsNaN(duration) || float.IsInfinity(duration) || duration <= 0F) rejectTween($"Duration must be a finite number and greater than 0 (received {duration}).");
-                  if (update is null) rejectTween($"Missing '{nameof(update)}' callback to apply tweening.");
-                  if (interpolator is null) rejectTween($"Missing '{nameof(interpolator)}' action to compute interpolated values.");
 
-                  void rejectTween(string message)
+                  void reject(string message)
                   {
                         Log.Warning($"Tween creation failed ({typeof(Value<TValue>).Name}<{typeof(TValue).Name}>): " + message);
                         isValid = false;
                   }
+                  if (source is null) reject($"Missing '{nameof(source)}' function to capture the start value.");
+                  if (destination is null) reject($"Missing '{nameof(destination)}' function to capture the end value.");
+                  if (float.IsNaN(duration) || float.IsInfinity(duration) || duration <= 0F) reject($"Duration must be a finite number and greater than 0 (received {duration}).");
+                  if (update is null) reject($"Missing '{nameof(update)}' callback to apply tweening.");
+                  if (interpolator is null) reject($"Missing '{nameof(interpolator)}' action to compute interpolated values.");
                   #endregion
 
                   if (!isValid) return Blank;
 
-                  Value<TValue> value = pool.Get();
-                  value.bootstrap = () =>
+                  Value<TValue> tween = pool.Get();
+                  tween.bootstrap = () =>
                   {
-                        value.a = value.current = source();
-                        value.b = destination();
+                        tween.a = tween.current = source();
+                        tween.b = destination();
                   };
-                  value.inverseDuration = 1F / duration;
-                  value.interpolator = interpolator;
-                  value.setter = update;
-                  return value;
+                  tween.inverseDuration = 1F / duration;
+                  tween.interpolator = interpolator;
+                  tween.setter = update;
+                  return tween;
             }
 
             protected override bool OnUpdate(float deltaTime)
@@ -108,15 +101,13 @@ namespace Emp37.Tweening
 
                         initializationPending = false;
                   }
-                  elapsed = Mathf.Clamp01(elapsed + deltaTime * (reversePlayback ? -1F : 1F) * inverseDuration);
+                  float direction = reversePlayback ? -1F : 1F;
+                  elapsed = Mathf.Clamp01(elapsed + deltaTime * direction * inverseDuration);
                   float easedRatio = easeFunction(elapsed);
                   TValue value = interpolator(a, b, easedRatio);
                   if (valueModifier != null)
                   {
-                        try
-                        {
-                              value = valueModifier(value);
-                        }
+                        try { value = valueModifier(value); }
                         catch (Exception ex)
                         {
                               Log.Exception(ex, linkedTarget);
@@ -126,7 +117,6 @@ namespace Emp37.Tweening
                   }
                   if (TryInvoke(setter, current = value, true)) return false;
                   TryInvoke(onUpdate);
-
                   return elapsed == (reversePlayback ? 0F : 1F);
             }
             protected override void OnLoop(Loop.Type loopType)
@@ -142,6 +132,13 @@ namespace Emp37.Tweening
                               break;
                   }
             }
+            protected override void OnStepComplete(PlaybackMode mode)
+            {
+                  if (mode != PlaybackMode.Rewind) return;
+                  reversePlayback = false;
+                  loopsCompleted = 0;
+                  elapsed = -delayTime;
+            }
 
             protected override void Clear()
             {
@@ -156,29 +153,31 @@ namespace Emp37.Tweening
 
             public virtual void Replay(bool includeDelay, bool rebuild)
             {
-                  ResetTween(includeDelay);
+                  playbackMode = PlaybackMode.Normal;
+                  ResetPlayback(includeDelay);
                   if (rebuild) initializationPending = true;
                   Phase = Phase.Active;
             }
-            protected override void OnReplay() => ResetTween(true);
+            protected override void OnReplay() => ResetPlayback(true);
 
             public override void Rewind(bool snap = true)
             {
                   if (initializationPending) return;
                   if (snap)
                   {
-                        ResetTween(true);
+                        ResetPlayback(true);
                         TryInvoke(setter, current = a, true);
                         OnPause();
                   }
                   else
                   {
+                        playbackMode = PlaybackMode.Rewind;
                         reversePlayback = true;
                         Phase = Phase.Active;
                   }
             }
 
-            private void ResetTween(bool includeDelay)
+            private void ResetPlayback(bool includeDelay)
             {
                   elapsed = includeDelay ? -delayTime : 0F;
                   loopsCompleted = 0;
@@ -186,37 +185,12 @@ namespace Emp37.Tweening
             }
 
             #region F L U E N T   M E T H O D S
-            public virtual Value<TValue> AddModifier(Modifier method)
-            {
-                  if (method != null) valueModifier = valueModifier == null ? method : (value => method(valueModifier(value)));
-                  return this;
-            }
-            public virtual Value<TValue> SetDelay(float time)
-            {
-                  delayTime = time;
-                  return this;
-            }
-            public virtual Value<TValue> SetEase(Type type)
-            {
-                  easeFunction = TypeMap[type];
-                  return this;
-            }
-            public virtual Value<TValue> SetEase(AnimationCurve curve)
-            {
-                  easeFunction = curve.Evaluate;
-                  return this;
-            }
-            public virtual Value<TValue> SetEase(Method method)
-            {
-                  easeFunction = method;
-                  return this;
-            }
-            public virtual Value<TValue> SetTarget(TValue value, bool rebaseStart = false)
-            {
-                  if (rebaseStart) a = current;
-                  b = value;
-                  return this;
-            }
+            public virtual Value<TValue> AddModifier(Modifier method) { if (method != null) valueModifier = valueModifier == null ? method : (value => method(valueModifier(value))); return this; }
+            public virtual Value<TValue> SetDelay(float time) { delayTime = time; return this; }
+            public virtual Value<TValue> SetEase(Type type) { easeFunction = TypeMap[type]; return this; }
+            public virtual Value<TValue> SetEase(AnimationCurve curve) { easeFunction = curve.Evaluate; return this; }
+            public virtual Value<TValue> SetEase(Method method) { easeFunction = method; return this; }
+            public virtual Value<TValue> SetTarget(TValue value, bool rebaseStart = false) { if (rebaseStart) a = current; b = value; return this; }
             #endregion
       }
 }
