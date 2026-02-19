@@ -17,6 +17,7 @@ namespace Emp37.Tweening
             public static T Resume<T>(this T tween) where T : Tween { tween.Resume(); return tween; }
             public static T OnStart<T>(this T tween, Action callback) where T : Tween { tween.setOnStart(callback); return tween; }
             public static T OnUpdate<T>(this T tween, Action callback) where T : Tween { tween.setOnUpdate(callback); return tween; }
+            public static T OnRewind<T>(this T tween, Action callback) where T : Tween { tween.setOnRewind(callback); return tween; }
             public static T OnLoopComplete<T>(this T tween, Action callback) where T : Tween { tween.setOnLoopComplete(callback); return tween; }
             public static T OnComplete<T>(this T tween, Action callback) where T : Tween { tween.setOnComplete(callback); return tween; }
             public static T OnKill<T>(this T tween, Action callback) where T : Tween { tween.setOnKill(callback); return tween; }
