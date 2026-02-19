@@ -35,8 +35,8 @@ namespace Emp37.Tweening
                   {
                         Tween tween = activeTweens[i];
 
-                        if (tween.phase == Phase.Active) tween.Update();
-                        if (tween.phase != Phase.Dead) continue;
+                        if (tween.Phase == Phase.Active) tween.Update();
+                        if (tween.Phase != Phase.Dead) continue;
 
                         int last = activeTweens.Count - 1;
                         if (i != last) activeTweens[i] = activeTweens[last];
