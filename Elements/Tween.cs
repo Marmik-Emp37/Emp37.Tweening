@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using UnityEngine;
 using UObject = UnityEngine.Object;
@@ -16,7 +16,7 @@ namespace Emp37.Tweening
       public abstract class Tween
       {
             // T Y P E S
-            protected enum Flow : byte { None, Forward, Rewind }
+            protected enum PlaybackMode { None, Forward, Backward, Rewind }
 
             // F I E L D S
             protected Func<float, bool> updateFunc;
@@ -30,13 +30,25 @@ namespace Emp37.Tweening
 
             private LoopType loopType;
             private Delta timeMode;
-            private Flow activeFlow;
+            private PlaybackMode _mode;
             private Phase phase;
 
             private bool isInitializationPending, isLinked, isAutoKill, isRecyclable;
+            private bool pauseOnComplete;
 
             // P R O P E R T I E S
             public string Tag => tag;
+            protected PlaybackMode Mode
+            {
+                  get => _mode;
+                  set
+                  {
+                        if (value == _mode) return;
+
+                        _mode = value;
+                        OnPlaybackChange(_mode);
+                  }
+            }
             public Phase Phase => phase;
             protected bool IsLinkDead => isLinked && linkedTarget == null;
             public abstract bool IsEmpty { get; }
@@ -50,7 +62,6 @@ namespace Emp37.Tweening
                         return;
                   }
                   float deltaTime = (timeMode is Delta.Unscaled) ? Time.unscaledDeltaTime : Time.deltaTime;
-
                   if (delayRemaining > 0F)
                   {
                         delayRemaining -= deltaTime;
@@ -59,7 +70,6 @@ namespace Emp37.Tweening
                         deltaTime = -delayRemaining;
                         delayRemaining = 0F;
                   }
-
                   if (isInitializationPending)
                   {
                         isInitializationPending = false;
@@ -67,19 +77,23 @@ namespace Emp37.Tweening
 
                         callbacks.onStart();
                   }
-
                   if (!updateFunc(deltaTime))
                   {
                         callbacks.onUpdate?.Invoke();
                         return;
                   }
 
-                  if (activeFlow is Flow.Rewind)
+                  if (pauseOnComplete)
                   {
-                        activeFlow = Flow.None;
-                        FinishRewind();
+                        pauseOnComplete = false;
+                        Mode = PlaybackMode.None;
+                        Reset();
+                        phase = Phase.Paused;
+                        OnPause();
+                        callbacks.onRewind();
                         return;
                   }
+
                   if (loopType != LoopType.None && incompleteLoops != 0)
                   {
                         if (incompleteLoops > 0) incompleteLoops--;
@@ -87,7 +101,6 @@ namespace Emp37.Tweening
                         callbacks.onLoopComplete();
                         return;
                   }
-
                   phase = Phase.Completed;
                   callbacks.onComplete();
 
@@ -95,11 +108,27 @@ namespace Emp37.Tweening
             }
 
             // C O N T R O L
+            public void PlayForward()
+            {
+                  if (Mode is PlaybackMode.Forward || phase is Phase.Completed or Phase.Dead) return;
+
+                  pauseOnComplete = false;
+                  Mode = PlaybackMode.Forward;
+                  phase = Phase.Active;
+            }
+            public void PlayBackwards()
+            {
+                  if (Mode is PlaybackMode.None or PlaybackMode.Backward || phase is Phase.Completed or Phase.Dead) return;
+
+                  pauseOnComplete = false;
+                  Mode = PlaybackMode.Backward;
+                  phase = Phase.Active;
+            }
             public void Replay(bool includeDelay = true, bool rebuild = false)
             {
                   if (phase is Phase.Dead) return;
 
-                  activeFlow = Flow.Forward;
+                  Mode = PlaybackMode.Forward;
                   Reset(includeDelay);
 
                   if (rebuild) isInitializationPending = true;
@@ -109,16 +138,25 @@ namespace Emp37.Tweening
             }
             public void Rewind(bool snap = true)
             {
-                  if (phase is Phase.Dead || isInitializationPending || activeFlow is Flow.None) return;
+                  if (phase is Phase.Dead || isInitializationPending || Mode is PlaybackMode.None) return;
                   if (snap)
                   {
-                        activeFlow = Flow.None;
-                        FinishRewind();
+                        pauseOnComplete = false;
+
+                        Mode = PlaybackMode.None;
+                        Reset();
+
+                        phase = Phase.Paused;
+                        OnPause();
+
+                        callbacks.onRewind();
                   }
                   else
                   {
-                        if (activeFlow is Flow.Rewind) return;
-                        activeFlow = Flow.Rewind;
+                        if (Mode is PlaybackMode.Rewind) return;
+
+                        pauseOnComplete = true;
+                        Mode = PlaybackMode.Rewind;
                         phase = Phase.Active;
                   }
                   OnRewind(snap);
@@ -145,7 +183,8 @@ namespace Emp37.Tweening
             {
                   if (phase is not Phase.Paused) return;
 
-                  if (activeFlow is Flow.None) activeFlow = Flow.Forward;
+                  if (Mode is PlaybackMode.None) Mode = PlaybackMode.Forward;
+
                   phase = Phase.Active;
                   OnResume();
             }
@@ -157,10 +196,11 @@ namespace Emp37.Tweening
                   loopCount = incompleteLoops = 0;
                   loopType = LoopType.None;
                   timeMode = Delta.Scaled;
-                  activeFlow = Flow.None;
+                  _mode = PlaybackMode.None;
                   phase = Phase.Idle;
                   isInitializationPending = isAutoKill = isRecyclable = true;
                   isLinked = false;
+                  pauseOnComplete = false;
                   Clear();
             }
             private void Reset(bool includeDelay = true)
@@ -185,17 +225,10 @@ namespace Emp37.Tweening
 
             protected abstract void OnInitialize();
             protected abstract void OnLoopComplete(LoopType loopType);
-            protected abstract void OnReset();
+            protected abstract void OnPlaybackChange(PlaybackMode mode);
             protected abstract void OnRewind(bool snap);
+            protected abstract void OnReset();
             protected abstract void OnRecycle();
-
-            private void FinishRewind()
-            {
-                  Reset();
-                  phase = Phase.Paused;
-                  OnPause();
-                  callbacks.onRewind();
-            }
 
             #region I N T E R N A L   C O N F I G
 #pragma warning disable IDE1006

@@ -133,10 +133,17 @@ namespace Emp37.Tweening
                   }
                   normalizedTime = direction < 0f ? 1F : 0F;
             }
+            protected override void OnPlaybackChange(PlaybackMode mode)
+            {
+                  direction = mode switch
+                  {
+                        PlaybackMode.Backward or PlaybackMode.Rewind => -1F,
+                        _ => +1F
+                  };
+            }
             protected override void OnRewind(bool snap)
             {
                   if (snap) Apply(0F);
-                  else direction = -1F;
             }
             protected override void OnRecycle() => pool.Release(this);
 
