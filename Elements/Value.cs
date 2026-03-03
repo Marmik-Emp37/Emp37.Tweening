@@ -68,7 +68,10 @@ namespace Emp37.Tweening
             }
 
             // U P D A T E   L O O P
-            private bool Update(float delta)
+            /// <summary>
+            /// Called each frame via the updateFunction delegate.
+            /// </summary>
+            private bool Tick(float delta)
             {
                   float blend = Mathf.Clamp01(normalizedTime + delta * inverseDuration);
                   Apply(normalizedTime = blend);
@@ -93,7 +96,7 @@ namespace Emp37.Tweening
             {
                   base.RestoreToDefault();
 
-                  updateFunction = Update;
+                  updateFunction = Tick;
                   a = b = current = default;
                   normalizedTime = inverseDuration = 0F;
                   easeMethod = Linear;
@@ -105,16 +108,14 @@ namespace Emp37.Tweening
             }
             protected override void OnLoop(LoopType type, float direction)
             {
-                  switch (type)
+                  normalizedTime = type switch
                   {
-                        case LoopType.Repeat:
-                              normalizedTime = direction < 0F ? 1F : 0F;
-                              break;
-
-                        case LoopType.Yoyo:
-                              normalizedTime = direction < 0F ? 0F : 1F;
-                              break;
-                  }
+                        // restart from the same edge
+                        LoopType.Repeat => direction < 0F ? 1F : 0F, 
+                        // flip: start from the opposite edge
+                        LoopType.Yoyo => direction < 0F ? 0F : 1F, 
+                        _ => normalizedTime
+                  };
             }
             protected override void Clear()
             {
@@ -129,6 +130,10 @@ namespace Emp37.Tweening
             public virtual Value<TValue> SetEase(Type type) { easeMethod = TypeMap[type]; return this; }
             public virtual Value<TValue> SetEase(AnimationCurve curve) { easeMethod = curve.Evaluate; return this; }
             public virtual Value<TValue> SetEase(Method method) { easeMethod = method; return this; }
+            /// <summary>
+            /// Retargets the tween's end value.
+            /// <br>If <paramref name="rebase"/> is true, the current interpolated value becomes the new start, allowing smooth mid-tween redirects without a visible jump.</br>
+            /// </summary>
             public virtual Value<TValue> SetTarget(TValue value, bool rebase = false) { if (rebase) a = current; b = value; return this; }
             #endregion
       }

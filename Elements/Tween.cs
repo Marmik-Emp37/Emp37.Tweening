@@ -21,7 +21,7 @@ namespace Emp37.Tweening
             private Phase phase;
             private sbyte direction;
 
-            private bool isInitializationPending, isLinked, isAutoKill, isRecyclable, isReceding;
+            private bool isInitializationPending, isLinked, isAutoKill, isRecyclable, isRetreating;
 
             // P R O P E R T I E S
             public string Tag => tag;
@@ -42,48 +42,40 @@ namespace Emp37.Tweening
                         Kill();
                         return;
                   }
-
                   float deltaTime = (timeMode is Delta.Scaled) ? Time.deltaTime : Time.unscaledDeltaTime;
-
                   if (remainingDelay > 0F)
                   {
                         remainingDelay -= deltaTime;
 
                         if (remainingDelay is > 0F) return;
-                        deltaTime = -remainingDelay;
+                        deltaTime = -remainingDelay; // carry over excess time
                         remainingDelay = 0F;
                   }
-
                   if (isInitializationPending)
                   {
                         isInitializationPending = false;
-
                         OnInitialize();
+
                         callbacks.onStart();
                   }
-
-                  sbyte direction = (sbyte) (this.direction * loop.Direction);
-
-                  if (!updateFunction(deltaTime * direction))
+                  sbyte effectiveDirection = (sbyte) (direction * loop.Direction);
+                  if (!updateFunction(deltaTime * effectiveDirection))
                   {
                         callbacks.onUpdate?.Invoke();
                         return;
                   }
-
-                  if (isReceding)
+                  if (isRetreating)
                   {
                         FinishRetreat();
                         return;
                   }
-
-                  if (loop.Continue(direction))
+                  if (loop.Continue(effectiveDirection))
                   {
-                        loop.Advance(direction);
-                        OnLoop(loop.Mode, direction);
+                        loop.Advance(effectiveDirection);
+                        OnLoop(loop.Mode, effectiveDirection);
                         callbacks.onLoopComplete();
                         return;
                   }
-
                   phase = Phase.Completed;
                   callbacks.onComplete();
 
@@ -91,22 +83,28 @@ namespace Emp37.Tweening
             }
 
             // C O N T R O L
+            /// <summary>Resumes or switches to forward playback from the current position.</summary>
             public void PlayForward()
             {
                   if (IsDead || !CanMoveForward) return;
 
-                  isReceding = false;
+                  isRetreating = false;
                   direction = 1;
                   phase = Phase.Active;
             }
-            public void PlayBackwards()
+            /// <summary>Resumes or switches to backward playback from the current position.</summary>
+            public void PlayBackward()
             {
                   if (IsDead || !CanMoveBack) return;
 
-                  isReceding = false;
+                  isRetreating = false;
                   direction = -1;
                   phase = Phase.Active;
             }
+            /// <summary>
+            /// Restarts the tween from the beginning and plays it forward.
+            /// <br>Source and destination values are re-evaluated if <paramref name="rebuild"/> is true.</br>
+            /// </summary>
             public void Replay(bool includeDelay = true, bool rebuild = false)
             {
                   if (IsDead) return;
@@ -117,16 +115,22 @@ namespace Emp37.Tweening
 
                   phase = Phase.Active;
             }
+            /// <summary>
+            /// Resets the tween back to its start position so it is ready to be replayed later.
+            /// </summary>
+            /// <param name="snap">If true, the reset is instant; otherwise the tween plays backward at normal speed until it reaches the start.</param>
             public void Retreat(bool snap = true)
             {
                   if (isInitializationPending || IsDead || !CanMoveBack) return;
+
                   if (snap)
                   {
                         FinishRetreat();
                         return;
                   }
-                  if (isReceding) return;
-                  isReceding = true;
+                  if (isRetreating) return;
+
+                  isRetreating = true;
                   direction = (sbyte) (-1 * loop.Direction);
                   phase = Phase.Active;
             }
@@ -166,7 +170,7 @@ namespace Emp37.Tweening
                   phase = Phase.Idle;
                   direction = 1;
                   isInitializationPending = isAutoKill = isRecyclable = true;
-                  isLinked = isReceding = false;
+                  isLinked = isRetreating = false;
             }
             protected virtual void OnPause()
             {
@@ -196,9 +200,12 @@ namespace Emp37.Tweening
 
                   OnReset(!isInitializationPending);
             }
+            /// <summary>
+            /// Resets state to the start position and pauses. The tween remains alive and can be replayed.
+            /// </summary>
             private void FinishRetreat()
             {
-                  isReceding = false;
+                  isRetreating = false;
                   direction = 1;
                   Reset();
 
