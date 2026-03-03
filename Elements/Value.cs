@@ -68,9 +68,9 @@ namespace Emp37.Tweening
             }
 
             // U P D A T E   L O O P
-            private bool Update(float deltaTime)
+            private bool Update(float delta)
             {
-                  float blend = Mathf.Clamp01(normalizedTime + deltaTime * inverseDuration);
+                  float blend = Mathf.Clamp01(normalizedTime + delta * inverseDuration);
                   Apply(normalizedTime = blend);
                   return blend is 1F || blend is 0F;
             }

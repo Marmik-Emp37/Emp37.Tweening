@@ -6,15 +6,14 @@ namespace Emp37.Tweening
       {
             internal static readonly Action none = static () => { };
             internal static readonly Callbacks Default = new() { onStart = none, onUpdate = null, onRetreat = none, onLoopComplete = none, onComplete = none, onKill = none };
-           
+
             internal Action onStart, onUpdate, onRetreat, onLoopComplete, onComplete, onKill;
       }
       internal struct Loop
       {
-            internal static readonly Loop Default = new() { completed = 0, count = 0, mode = LoopType.None, direction = 1, };
+            internal static readonly Loop Default = new() { count = 0, completed = 0, mode = LoopType.None, direction = 1, };
 
-            private int completed;
-            private int count;
+            private int count, completed;
             private LoopType mode;
             private sbyte direction;
 
@@ -27,7 +26,7 @@ namespace Emp37.Tweening
             internal void Configure(int iterations, LoopType type)
             {
                   count = iterations < 0 ? -1 : iterations;
-                  mode = count is 0 ? 0 : type;
+                  mode = count is 0 ? LoopType.None : type;
             }
             internal readonly bool Continue(sbyte playbackDirection)
             {
