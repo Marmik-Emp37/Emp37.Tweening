@@ -69,9 +69,8 @@ namespace Emp37.Tweening
                         FinishRetreat();
                         return;
                   }
-                  if (loop.Continue(effectiveDirection))
+                  if (loop.TryAdvance(effectiveDirection))
                   {
-                        loop.Advance(effectiveDirection);
                         OnLoop(loop.Mode, effectiveDirection);
                         callbacks.onLoopComplete();
                         return;
@@ -131,7 +130,7 @@ namespace Emp37.Tweening
                   if (isRetreating) return;
 
                   isRetreating = true;
-                  direction = (sbyte) (-1 * loop.Direction);
+                  direction = (sbyte) -loop.Direction;
                   phase = Phase.Active;
             }
             public void Kill()

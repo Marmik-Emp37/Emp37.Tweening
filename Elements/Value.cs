@@ -110,10 +110,8 @@ namespace Emp37.Tweening
             {
                   normalizedTime = type switch
                   {
-                        // restart from the same edge
-                        LoopType.Repeat => direction < 0F ? 1F : 0F, 
-                        // flip: start from the opposite edge
-                        LoopType.Yoyo => direction < 0F ? 0F : 1F, 
+                        LoopType.Repeat => direction < 0F ? 1F : 0F, // restart from the same edge
+                        LoopType.Yoyo => direction < 0F ? 0F : 1F, // flip: start from the opposite edge
                         _ => normalizedTime
                   };
             }
