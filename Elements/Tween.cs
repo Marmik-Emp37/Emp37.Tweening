@@ -59,11 +59,12 @@ namespace Emp37.Tweening
                         callbacks.onStart();
                   }
                   sbyte effectiveDirection = (sbyte) (direction * loop.Direction);
-                  if (!updateFunction(deltaTime * effectiveDirection))
-                  {
-                        callbacks.onUpdate?.Invoke();
-                        return;
-                  }
+
+                  bool finished = updateFunction(deltaTime * effectiveDirection);
+                  callbacks.onUpdate?.Invoke();
+
+                  if (!finished) return;
+
                   if (isRetreating)
                   {
                         FinishRetreat();

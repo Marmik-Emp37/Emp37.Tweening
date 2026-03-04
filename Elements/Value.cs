@@ -39,7 +39,7 @@ namespace Emp37.Tweening
             protected override bool CanMoveForward => normalizedTime < 1F - Mathf.Epsilon;
 
             // C R E A T I O N
-            internal static Value<TValue> Fetch(Func<TValue> source, Func<TValue> destination, float duration, Action<TValue> update, Lerp lerpFunction)
+            internal static Value<TValue> Fetch(Func<TValue> a, Func<TValue> b, Action<TValue> update, float duration, Lerp lerp)
             {
                   #region V A L I D A T I O N
                   bool isValid = true;
@@ -49,20 +49,20 @@ namespace Emp37.Tweening
                         Log.Warning($"Tween creation failed ({typeof(Value<TValue>).Name}<{typeof(TValue).Name}>): " + message);
                         isValid = false;
                   }
-                  if (source is null) reject($"Missing '{nameof(source)}' function to capture the start value.");
-                  if (destination is null) reject($"Missing '{nameof(destination)}' function to capture the end value.");
+                  if (a is null) reject($"Missing '{nameof(a)}' function to capture the start value.");
+                  if (b is null) reject($"Missing '{nameof(b)}' function to capture the end value.");
                   if (float.IsNaN(duration) || float.IsInfinity(duration) || duration <= 0F) reject($"Duration must be a finite number and greater than 0 (received {duration}).");
                   if (update is null) reject($"Missing '{nameof(update)}' callback to apply tweening.");
-                  if (lerpFunction is null) reject($"Missing '{nameof(lerpFunction)}' action to compute interpolated values.");
+                  if (lerp is null) reject($"Missing '{nameof(lerp)}' action to compute interpolated values.");
                   #endregion
 
                   if (!isValid) return Blank;
 
                   Value<TValue> tween = pool.Get();
-                  tween.source = source;
-                  tween.destination = destination;
+                  tween.source = a;
+                  tween.destination = b;
                   tween.inverseDuration = 1F / duration;
-                  tween.interpolator = lerpFunction;
+                  tween.interpolator = lerp;
                   tween.update = update;
                   return tween;
             }
@@ -108,12 +108,8 @@ namespace Emp37.Tweening
             }
             protected override void OnLoop(LoopType type, float direction)
             {
-                  normalizedTime = type switch
-                  {
-                        LoopType.Repeat => direction < 0F ? 1F : 0F, // restart from the same edge
-                        LoopType.Yoyo => direction < 0F ? 0F : 1F, // flip: start from the opposite edge
-                        _ => normalizedTime
-                  };
+                  normalizedTime = type switch { LoopType.Repeat => direction < 0F ? 1F : 0F, LoopType.Yoyo => direction < 0F ? 0F : 1F, _ => normalizedTime };
+                  Apply(normalizedTime);
             }
             protected override void Clear()
             {
