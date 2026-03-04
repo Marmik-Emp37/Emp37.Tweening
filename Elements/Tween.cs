@@ -218,7 +218,7 @@ namespace Emp37.Tweening
 
             #region I N T E R N A L   C O N F I G
 #pragma warning disable IDE1006
-            internal void setDelay(float value) => initialDelay = Mathf.Max(0F, value);
+            internal void setDelay(float value) => initialDelay = remainingDelay = Mathf.Max(0F, value);
             internal void setTag(string value) => tag = value;
             internal void setTimeMode(Delta mode) => timeMode = mode;
             internal void setAutoKill(bool value) => isAutoKill = value;

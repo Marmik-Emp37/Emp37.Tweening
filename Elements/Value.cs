@@ -43,7 +43,6 @@ namespace Emp37.Tweening
             {
                   #region V A L I D A T I O N
                   bool isValid = true;
-
                   void reject(string message)
                   {
                         Log.Warning($"Tween creation failed ({typeof(Value<TValue>).Name}<{typeof(TValue).Name}>): " + message);
