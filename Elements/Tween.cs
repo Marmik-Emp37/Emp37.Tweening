@@ -71,7 +71,7 @@ namespace Emp37.Tweening
                         return;
                   }
 
-                  if (loop.TryAdvance(playbackDirection))
+                  if (loop.Step(playbackDirection))
                   {
                         OnLoop(loop.Mode, playbackDirection);
                         callbacks.onLoopComplete();

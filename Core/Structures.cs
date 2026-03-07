@@ -28,17 +28,14 @@ namespace Emp37.Tweening
                   count = iterations < 0 ? -1 : iterations;
                   mode = count is 0 ? LoopType.None : type;
             }
-            private readonly bool Continue(sbyte playbackDirection)
+            internal bool Step(sbyte effectiveDir)
             {
                   if (mode == LoopType.None) return false;
-                  if (IsInfinite) return true;
-
-                  return playbackDirection > 0 ? (completed < count) : (completed > 0);
-            }
-            internal bool TryAdvance(sbyte effectiveDirection)
-            {
-                  if (!Continue(effectiveDirection)) return false;
-                  if (!IsInfinite) completed += effectiveDirection;
+                  if (!IsInfinite)
+                  {
+                        if (effectiveDir > 0 ? completed >= count : completed <= 0) return false;
+                        completed += effectiveDir;
+                  }
                   if (mode == LoopType.Yoyo) direction = (sbyte) -direction;
                   return true;
             }
