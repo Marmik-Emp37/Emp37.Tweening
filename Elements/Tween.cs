@@ -131,8 +131,8 @@ namespace Emp37.Tweening
                         return;
                   }
                   if (isRetreating) return;
-
                   isRetreating = true;
+
                   direction = (sbyte) -loop.Direction;
                   phase = Phase.Active;
             }

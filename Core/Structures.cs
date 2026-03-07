@@ -30,13 +30,13 @@ namespace Emp37.Tweening
             }
             internal bool Step(sbyte effectiveDir)
             {
-                  if (mode == LoopType.None) return false;
+                  if (mode is LoopType.None) return false;
                   if (!IsInfinite)
                   {
                         if (effectiveDir > 0 ? completed >= count : completed <= 0) return false;
                         completed += effectiveDir;
                   }
-                  if (mode == LoopType.Yoyo) direction = (sbyte) -direction;
+                  if (mode is LoopType.Yoyo) direction = (sbyte) -direction;
                   return true;
             }
             internal void Reset()

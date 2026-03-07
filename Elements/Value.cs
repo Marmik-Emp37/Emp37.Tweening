@@ -80,8 +80,7 @@ namespace Emp37.Tweening
             {
                   float easedRatio = easeMethod(ratio);
                   TValue value = interpolator(a, b, easedRatio);
-                  Modifier mod = modifier;
-                  if (mod != null) value = mod(value);
+                  if (modifier != null) value = modifier(value);
                   update(current = value);
             }
 
@@ -109,9 +108,9 @@ namespace Emp37.Tweening
             {
                   normalizedTime = type switch
                   {
-                        LoopType.Repeat => direction < 0F ? 1F : 0F,
-                        LoopType.Yoyo => direction < 0F ? 0F : 1F,
-                        _ => normalizedTime
+                        LoopType.Repeat => direction > 0F ? 0F : 1F,
+                        LoopType.Yoyo => direction > 0F ? 1F : 0F,
+                        _ => throw new InvalidOperationException($"OnLoop called with unexpected LoopType: {type}")
                   };
                   Apply(normalizedTime);
             }
