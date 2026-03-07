@@ -107,7 +107,12 @@ namespace Emp37.Tweening
             }
             protected override void OnLoop(LoopType type, float direction)
             {
-                  normalizedTime = type switch { LoopType.Repeat => direction < 0F ? 1F : 0F, LoopType.Yoyo => direction < 0F ? 0F : 1F, _ => normalizedTime };
+                  normalizedTime = type switch
+                  {
+                        LoopType.Repeat => direction < 0F ? 1F : 0F,
+                        LoopType.Yoyo => direction < 0F ? 0F : 1F,
+                        _ => normalizedTime
+                  };
                   Apply(normalizedTime);
             }
             protected override void Clear()

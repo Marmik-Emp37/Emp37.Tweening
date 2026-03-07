@@ -26,13 +26,13 @@ namespace Emp37.Tweening
             // P R O P E R T I E S
             public string Tag => tag;
             public Phase Phase => phase;
+            public abstract bool IsEmpty { get; }
+
+            protected abstract bool CanMoveForward { get; }
+            protected abstract bool CanMoveBack { get; }
 
             private bool IsLinkDead => isLinked && linkedTarget == null;
             private bool IsDead => phase is Phase.Dead;
-
-            public abstract bool IsEmpty { get; }
-            protected abstract bool CanMoveForward { get; }
-            protected abstract bool CanMoveBack { get; }
 
 
             internal void Update()
@@ -42,15 +42,16 @@ namespace Emp37.Tweening
                         Kill();
                         return;
                   }
+
                   float deltaTime = (timeMode is Delta.Scaled) ? Time.deltaTime : Time.unscaledDeltaTime;
                   if (remainingDelay > 0F)
                   {
                         remainingDelay -= deltaTime;
-
                         if (remainingDelay is > 0F) return;
                         deltaTime = -remainingDelay; // carry over excess time
                         remainingDelay = 0F;
                   }
+
                   if (isInitializationPending)
                   {
                         isInitializationPending = false;
@@ -58,24 +59,25 @@ namespace Emp37.Tweening
 
                         callbacks.onStart();
                   }
-                  sbyte effectiveDirection = (sbyte) (direction * loop.Direction);
 
-                  bool finished = updateFunction(deltaTime * effectiveDirection);
+                  sbyte playbackDirection = (sbyte) (direction * loop.Direction);
+                  bool isComplete = updateFunction(deltaTime * playbackDirection);
                   callbacks.onUpdate?.Invoke();
 
-                  if (!finished) return;
-
+                  if (!isComplete) return;
                   if (isRetreating)
                   {
                         FinishRetreat();
                         return;
                   }
-                  if (loop.TryAdvance(effectiveDirection))
+
+                  if (loop.TryAdvance(playbackDirection))
                   {
-                        OnLoop(loop.Mode, effectiveDirection);
+                        OnLoop(loop.Mode, playbackDirection);
                         callbacks.onLoopComplete();
                         return;
                   }
+
                   phase = Phase.Completed;
                   callbacks.onComplete();
 

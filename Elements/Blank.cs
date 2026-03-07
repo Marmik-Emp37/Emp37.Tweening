@@ -4,16 +4,23 @@ namespace Emp37.Tweening
 {
       public sealed class Blank<T> : Value<T> where T : struct
       {
-            public override bool IsEmpty => true;
+            public sealed override bool IsEmpty => true;
+            protected sealed override bool CanMoveBack => false;
+            protected sealed override bool CanMoveForward => false;
 
-            protected override void OnPause() { }
-            protected override void OnResume() { }
-            protected override void Clear() { }
+            protected sealed override void OnInitialize() { }
+            protected sealed override void RestoreToDefault() { }
+            protected sealed override void OnPause() { }
+            protected sealed override void OnResume() { }
+            protected sealed override void OnReset(bool _) { }
+            protected sealed override void OnLoop(LoopType _, float __) { }
+            protected sealed override void Clear() { }
+            protected sealed override void OnRecycle() { }
 
-            public override Value<T> SetModifier(Modifier _) => this;
-            public override Value<T> SetEase(Ease.Type _) => this;
-            public override Value<T> SetEase(AnimationCurve curve) => this;
-            public override Value<T> SetEase(Ease.Method _) => this;
-            public override Value<T> SetTarget(T _, bool __) => this;
+            public sealed override Value<T> SetModifier(Modifier _) => this;
+            public sealed override Value<T> SetEase(Ease.Type _) => this;
+            public sealed override Value<T> SetEase(AnimationCurve _) => this;
+            public sealed override Value<T> SetEase(Ease.Method _) => this;
+            public sealed override Value<T> SetTarget(T _, bool __) => this;
       }
 }
