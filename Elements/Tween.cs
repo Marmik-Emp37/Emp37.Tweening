@@ -8,7 +8,7 @@ namespace Emp37.Tweening
       public abstract class Tween
       {
             // F I E L D S
-            protected Func<float, bool> updateFunction;
+            protected Func<float, bool> updateFunc;
 
             private string tag;
             private UObject linkedTarget;
@@ -43,12 +43,13 @@ namespace Emp37.Tweening
                         return;
                   }
 
-                  float deltaTime = (timeMode is Delta.Scaled) ? Time.deltaTime : Time.unscaledDeltaTime;
+                  float deltaTime = timeMode is Delta.Scaled ? Time.deltaTime : Time.unscaledDeltaTime;
+
                   if (remainingDelay > 0F)
                   {
-                        remainingDelay -= deltaTime;
-                        if (remainingDelay is > 0F) return;
-                        deltaTime = -remainingDelay; // carry over excess time
+                        if ((remainingDelay -= deltaTime) > 0F) return;
+
+                        deltaTime = Math.Abs(remainingDelay);
                         remainingDelay = 0F;
                   }
 
@@ -60,20 +61,23 @@ namespace Emp37.Tweening
                         callbacks.onStart();
                   }
 
-                  int playbackDirection = direction * loop.Direction;
-                  bool isMovingForward = playbackDirection > 0F, isComplete = updateFunction(deltaTime * playbackDirection);
-                  callbacks.onUpdate?.Invoke();
+                  int direction = this.direction * loop.Direction;
 
-                  if (!isComplete) return;
+                  bool complete = updateFunc(deltaTime * direction);
+                  callbacks.onUpdate?.Invoke();
+                  if (!complete) return;
+
                   if (isRetreating)
                   {
                         FinishRetreat();
                         return;
                   }
 
-                  if (loop.Step(isMovingForward))
+                  bool forward = direction > 0;
+
+                  if (loop.TryAdvance(forward))
                   {
-                        OnLoop(loop.Mode, isMovingForward);
+                        OnLoop(loop.Mode, forward);
                         callbacks.onLoopComplete();
                         return;
                   }
@@ -92,6 +96,7 @@ namespace Emp37.Tweening
 
                   isRetreating = false;
                   direction = 1;
+
                   phase = Phase.Active;
             }
             /// <summary>Resumes or switches to backward playback from the current position.</summary>
@@ -101,6 +106,7 @@ namespace Emp37.Tweening
 
                   isRetreating = false;
                   direction = -1;
+
                   phase = Phase.Active;
             }
             /// <summary>
@@ -124,7 +130,6 @@ namespace Emp37.Tweening
             public void Retreat(bool snap = true)
             {
                   if (isInitializationPending || IsDead || !CanMoveBack) return;
-
                   if (snap)
                   {
                         FinishRetreat();
@@ -132,7 +137,6 @@ namespace Emp37.Tweening
                   }
                   if (isRetreating) return;
                   isRetreating = true;
-
                   direction = (sbyte) -loop.Direction;
                   phase = Phase.Active;
             }
@@ -182,7 +186,7 @@ namespace Emp37.Tweening
             }
             protected virtual void Clear()
             {
-                  updateFunction = null;
+                  updateFunc = null;
                   tag = null;
                   linkedTarget = null;
                   callbacks = Callbacks.Default;
@@ -192,7 +196,7 @@ namespace Emp37.Tweening
             }
 
             protected abstract void OnInitialize();
-            protected abstract void OnLoop(LoopType type, bool isForward);
+            protected abstract void OnLoop(LoopType type, bool forward);
             protected abstract void OnReset(bool snapToStart);
 
             private void Reset(bool includeDelay = true)

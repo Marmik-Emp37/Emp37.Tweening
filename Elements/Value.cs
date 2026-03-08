@@ -94,7 +94,7 @@ namespace Emp37.Tweening
             {
                   base.RestoreToDefault();
 
-                  updateFunction = Tick;
+                  updateFunc = Tick;
                   a = b = current = default;
                   normalizedTime = inverseDuration = 0F;
                   easeMethod = Linear;
@@ -104,14 +104,9 @@ namespace Emp37.Tweening
                   normalizedTime = 0F;
                   if (snapToStart) Apply(normalizedTime);
             }
-            protected override void OnLoop(LoopType type, bool isForward)
+            protected override void OnLoop(LoopType type, bool forward)
             {
-                  normalizedTime = type switch
-                  {
-                        LoopType.Repeat => isForward ? 0F : 1F,
-                        LoopType.Yoyo => isForward ? 1F : 0F,
-                        _ => throw new InvalidOperationException($"OnLoop called with unexpected LoopType: {type}")
-                  };
+                  normalizedTime = (forward ^ type == LoopType.Repeat) ? 1F : 0F;
                   Apply(normalizedTime);
             }
             protected override void Clear()
