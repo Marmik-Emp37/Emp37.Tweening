@@ -36,9 +36,9 @@ namespace Emp37.Tweening
 		private float normalizedTime, inverseDuration;
 
 		// P R O P E R T I E S
-		public override bool IsEmpty => ReferenceEquals(Blank, this);
-		protected override bool CanMoveBack => normalizedTime > Mathf.Epsilon;
-		protected override bool CanMoveForward => normalizedTime < 1F - Mathf.Epsilon;
+		internal override bool IsEmpty => ReferenceEquals(Blank, this);
+		internal override bool CanMoveBack => normalizedTime > Mathf.Epsilon;
+		internal override bool CanMoveForward => normalizedTime < 1F - Mathf.Epsilon;
 
 		// C R E A T I O N
 		internal static Value<TValue> Fetch(Getter a, Getter b, Setter update, float duration, Interpolator lerp)

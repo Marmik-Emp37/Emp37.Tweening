@@ -26,10 +26,10 @@ namespace Emp37.Tweening
             // P R O P E R T I E S
             public string Tag => tag;
             public Phase Phase => phase;
-            public abstract bool IsEmpty { get; }
 
-            protected abstract bool CanMoveForward { get; }
-            protected abstract bool CanMoveBack { get; }
+            internal abstract bool IsEmpty { get; }
+		internal abstract bool CanMoveForward { get; }
+		internal abstract bool CanMoveBack { get; }
 
             private bool IsLinkDead => isLinked && linkedTarget == null;
             private bool IsDead => phase is Phase.Dead;

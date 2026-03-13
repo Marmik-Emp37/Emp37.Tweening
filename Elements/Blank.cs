@@ -4,9 +4,9 @@ namespace Emp37.Tweening
 {
       public sealed class Blank<T> : Value<T> where T : struct
       {
-            public sealed override bool IsEmpty => true;
-            protected sealed override bool CanMoveBack => false;
-            protected sealed override bool CanMoveForward => false;
+		internal sealed override bool IsEmpty => true;
+		internal sealed override bool CanMoveBack => false;
+		internal sealed override bool CanMoveForward => false;
 
             protected sealed override void OnInitialize() { }
             protected sealed override void RestoreToDefault() { }

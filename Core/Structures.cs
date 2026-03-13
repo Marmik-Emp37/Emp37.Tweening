@@ -26,7 +26,7 @@ namespace Emp37.Tweening
 
             internal void Configure(int iterations, LoopType type)
             {
-                  count = Math.Min(-1, iterations);
+                  count = Math.Max(-1, iterations);
                   mode = count is 0 ? LoopType.None : type;
             }
             internal bool TryAdvance(bool isForward)
