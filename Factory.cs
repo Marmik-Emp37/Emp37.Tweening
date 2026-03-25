@@ -1,0 +1,71 @@
+using System.Collections.Generic;
+
+using UnityEngine;
+
+namespace Emp37.Tweening
+{
+	[DefaultExecutionOrder(1), DisallowMultipleComponent, AddComponentMenu("")]
+	public sealed class Factory : MonoBehaviour
+	{
+		private static Factory instance = null!;
+
+		private static readonly List<Tween> activeTweens = new(128);
+
+
+		private Factory()
+		{
+		}
+
+		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+		private static void Initialize()
+		{
+			if (instance != null)
+			{
+				DestroyImmediate(instance.gameObject);
+				instance = null;
+			}
+			instance = new GameObject("~" + nameof(Factory)).AddComponent<Factory>();
+			DontDestroyOnLoad(instance);
+		}
+
+		private void Update()
+		{
+			for (int i = activeTweens.Count - 1; i >= 0; i--)
+			{
+				Tween tween = activeTweens[i];
+
+				if (tween.Phase == Phase.Active) tween.Update();
+				if (tween.Phase != Phase.Dead) continue;
+
+				int last = activeTweens.Count - 1;
+				if (i != last) activeTweens[i] = activeTweens[last];
+				activeTweens.RemoveAt(last);
+
+				if (activeTweens.Count == 0)
+				{
+					enabled = false;
+					return;
+				}
+			}
+		}
+		private void OnDestroy()
+		{
+			if (instance != this) return;
+			activeTweens.Clear();
+			instance = null;
+		}
+
+		public static void Register(Tween tween)
+		{
+			if (instance == null || tween == null || tween.IsEmpty) return;
+			if (activeTweens.Count == activeTweens.Capacity)
+			{
+				Log.Info($"[{typeof(Factory).FullName}] Tween capacity ({activeTweens.Capacity}) reached. Factory is scaling up, check for leaks or unintended bursts.", instance);
+			}
+			activeTweens.Add(tween);
+			tween.Replay();
+
+			instance.enabled = true;
+		}
+	}
+}
